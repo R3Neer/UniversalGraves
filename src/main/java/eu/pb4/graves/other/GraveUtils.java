@@ -28,6 +28,8 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.s2c.play.PlaySoundFromEntityS2CPacket;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.server.MinecraftServer;
@@ -35,9 +37,9 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.Property;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.ItemScatterer;
@@ -45,8 +47,8 @@ import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.*;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.registry.RegistryKey;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.border.WorldBorder;
+import net.minecraft.world.rule.GameRules;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -243,7 +245,7 @@ public class GraveUtils {
                     if (--teleportTicks >= 0) {
                         if (!config.teleportation.allowMovingDuringTeleportation && !player.getEntityPos().equals(currentPosition)) {
                             player.sendMessage(config.teleportation.text.teleportCancelledText.text());
-                            player.playSoundToPlayer(SoundEvents.ENTITY_SHULKER_HURT_CLOSED,
+                            playSoundToPlayer(player, SoundEvents.ENTITY_SHULKER_HURT_CLOSED,
                                     SoundCategory.MASTER, 1f, 0.5f);
                             finishedCallback.accept(false);
                             return;
@@ -254,7 +256,7 @@ public class GraveUtils {
                             player.teleport(world, x + 0.5D, y + 1.0D, z + 0.5D,
                                     Set.of(),
                                     player.getYaw(), player.getPitch(), true);
-                            player.playSoundToPlayer(SoundEvents.ENTITY_ENDERMAN_TELEPORT,
+                            playSoundToPlayer(player, SoundEvents.ENTITY_ENDERMAN_TELEPORT,
                                     SoundCategory.MASTER, 1f, 1f);
                             ((PlayerAdditions) player).graves$setInvulnerable(true);
                         }
@@ -274,7 +276,7 @@ public class GraveUtils {
         Config config = ConfigManager.getConfig();
 
 
-        if (damageWorld.getGameRules().getBoolean(GameRules.KEEP_INVENTORY)
+        if (damageWorld.getGameRules().getValue(GameRules.KEEP_INVENTORY)
                 || config.placement.blacklistedWorlds.contains(player.getEntityWorld().getRegistryKey().getValue())
                 || config.placement.maxGraveCount == 0
         ) {
@@ -461,6 +463,12 @@ public class GraveUtils {
             player.experienceProgress = (player.experienceProgress - 1.0F) * (float)player.getNextLevelExperience();
             player.addExperienceLevels(1);
             player.experienceProgress /= (float)player.getNextLevelExperience();
+        }
+    }
+
+    public static void playSoundToPlayer(PlayerEntity player, SoundEvent soundEvent, SoundCategory category, float volume, float pitch) {
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            serverPlayer.networkHandler.sendPacket(new PlaySoundFromEntityS2CPacket(Registries.SOUND_EVENT.getEntry(soundEvent), category, player, volume, pitch, player.getRandom().nextLong()));
         }
     }
 

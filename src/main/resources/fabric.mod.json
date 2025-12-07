@@ -29,9 +29,12 @@
     "universal-graves.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.15.10",
+    "fabricloader": ">=0.18.0",
     "fabric-api": "*",
-    "minecraft": ">=1.21-",
+    "polymer-core": "*",
+    "polymer-resource-pack": "*",
+    "polymer-virtual-entity": "*",
+    "minecraft": ">=1.21.11-",
     "java": ">=21"
   }
 }

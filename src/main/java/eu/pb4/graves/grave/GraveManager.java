@@ -7,14 +7,13 @@ import eu.pb4.graves.registry.GraveGameRules;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.SharedConstants;
-import net.minecraft.datafixer.DataFixTypes;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.dynamic.Codecs;
 import net.minecraft.util.math.BlockPos;
@@ -38,12 +37,12 @@ public final class GraveManager extends PersistentState {
     private int breakingTime;
 
 
-    public static PersistentStateType<GraveManager> getType() {
-        return new PersistentStateType<>("universal-graves", (PersistentState.Context ctx) -> new GraveManager(),
-                (PersistentState.Context ctx) ->  Codecs.fromOps(NbtOps.INSTANCE)
+    public static PersistentStateType<GraveManager> getType(ServerWorld world) {
+        return new PersistentStateType<>("universal-graves", GraveManager::new,
+                Codecs.fromOps(NbtOps.INSTANCE)
                         .xmap(
-                                nbt -> fromNbt((NbtCompound) nbt, ctx.getWorldOrThrow().getRegistryManager(), ctx.getWorldOrThrow().getServer().getDataFixer()),
-                                manager -> manager.writeNbt(new NbtCompound(), ctx.getWorldOrThrow().getRegistryManager())),
+                                nbt -> fromNbt((NbtCompound) nbt, world.getRegistryManager(), world.getServer().getDataFixer()),
+                                manager -> manager.writeNbt(new NbtCompound(), world.getRegistryManager())),
                 null);
     }
 

@@ -1,6 +1,7 @@
 package eu.pb4.graves.ui;
 
 import eu.pb4.graves.GraveTextures;
+import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.sgui.api.gui.SimpleGui;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -83,10 +84,10 @@ public abstract class PagedGui extends SimpleGui {
     protected abstract GuiSlot getNavElement(int id);
 
     public static final void playClickSound(ServerPlayerEntity player) {
-        player.playSoundToPlayer(SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.MASTER, 1, 1);
+        GraveUtils.playSoundToPlayer(player, SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.UI, 1, 1);
     }
 
     public static final void playClickSound(ServerPlayerEntity player, SoundEvent soundEvent) {
-        player.playSoundToPlayer(soundEvent, SoundCategory.MASTER, 1, 1);
+        GraveUtils.playSoundToPlayer(player, soundEvent, SoundCategory.UI, 1, 1);
     }
 }

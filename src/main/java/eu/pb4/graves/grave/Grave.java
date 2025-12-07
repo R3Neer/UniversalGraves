@@ -172,7 +172,7 @@ public final class Grave {
 
         nbt.put("Items", items);
         nbt.putByte("SkinModelParts", this.skinModelParts);
-        nbt.putByte("MainArm", (byte) this.mainArm.getId());
+        nbt.putByte("MainArm", (byte) this.mainArm.ordinal());
         return nbt;
     }
 
@@ -226,7 +226,7 @@ public final class Grave {
             }
 
             if (nbt.contains("MainArm")) {
-                this.mainArm = nbt.getByte("MainArm", (byte) 0) == Arm.LEFT.getId() ? Arm.LEFT : Arm.RIGHT;
+                this.mainArm = nbt.getByte("MainArm", (byte) 0) == Arm.LEFT.ordinal() ? Arm.LEFT : Arm.RIGHT;
             }
 
             this.updateDisplay();

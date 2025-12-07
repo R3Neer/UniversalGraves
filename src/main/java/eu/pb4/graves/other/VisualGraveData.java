@@ -46,7 +46,7 @@ public record VisualGraveData(ProfileComponent profile, byte visualSkinModelLaye
         view.putLong("CreationTime", this.creationTime);
         view.putInt("MinecraftDay", this.minecraftDay);
         view.putByte("SkinModelParts", this.visualSkinModelLayers);
-        view.putByte("MainArm", (byte) this.mainArm.getId());
+        view.putByte("MainArm", (byte) this.mainArm.ordinal());
         this.location.writeData(view);
     }
 
@@ -55,7 +55,7 @@ public record VisualGraveData(ProfileComponent profile, byte visualSkinModelLaye
         return new VisualGraveData(
                 LegacyNbtHelper.readProfileComponentOrLegacyGameProfile(view.getReadView("GameProfile")).orElse(Grave.DEFAULT_PROFILE_COMPONENT),
                 view.getByte("SkinModelParts", (byte) 0xFF),
-                view.getByte("MainArm", (byte) 0) == Arm.LEFT.getId() ? Arm.LEFT : Arm.RIGHT,
+                view.getByte("MainArm", (byte) 0) == Arm.LEFT.ordinal() ? Arm.LEFT : Arm.RIGHT,
                 view.read("DeathCause", TextCodecs.CODEC).orElse(Text.empty()),
                 view.getLong("CreationTime", 0),
                 Location.readData(view),
