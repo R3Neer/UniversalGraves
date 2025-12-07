@@ -3,10 +3,9 @@ package eu.pb4.graves.config.data;
 import eu.pb4.graves.config.Config;
 import eu.pb4.graves.other.GravesXPCalculation;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.damage.DamageTypes;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.EntityType;
 import java.util.*;
 
 @Deprecated
@@ -101,11 +100,11 @@ public class LegacyConfigData {
         }
 
         if (!this.createFromVoid) {
-            config.placement.ignoredDamageTypes.put(DamageTypes.OUT_OF_WORLD.getValue(), WrappedText.EMPTY);
+            config.placement.ignoredDamageTypes.put(DamageTypes.FELL_OUT_OF_WORLD.identifier(), WrappedText.EMPTY);
         }
 
         if (!this.createFromCommandDeaths) {
-            config.placement.ignoredDamageTypes.put(DamageTypes.GENERIC_KILL.getValue(), WrappedText.EMPTY);
+            config.placement.ignoredDamageTypes.put(DamageTypes.GENERIC_KILL.identifier(), WrappedText.EMPTY);
         }
 
 

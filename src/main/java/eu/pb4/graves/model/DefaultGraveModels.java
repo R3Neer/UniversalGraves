@@ -1,24 +1,24 @@
 package eu.pb4.graves.model;
 
+import com.mojang.math.Transformation;
 import eu.pb4.graves.model.parts.EntityModelPart;
 import eu.pb4.graves.model.parts.ItemDisplayModelPart;
 import eu.pb4.graves.model.parts.ParticleModelPart;
 import eu.pb4.graves.model.parts.TextDisplayModelPart;
 import eu.pb4.graves.registry.IconItem;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.decoration.Brightness;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.item.Items;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.util.math.AffineTransformation;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Brightness;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 public class DefaultGraveModels {
     public static final GraveModel FALLBACK = playerHead();
@@ -40,19 +40,19 @@ public class DefaultGraveModels {
         var model = new GraveModel();
         {
             var head = new ItemDisplayModelPart();
-            head.transformation = new AffineTransformation(
+            head.transformation = new Transformation(
                     new Matrix4f().scale(0.8f)
             );
             head.transformation.getTranslation();
-            head.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            head.billboardMode = Display.BillboardConstraints.CENTER;
 
             var skull = head.copy();
             head.tags.add(ModelTags.IF_PROTECTED);
             head.tags.add(ModelTags.PLAYER_HEAD);
-            head.itemStack = Items.PLAYER_HEAD.getDefaultStack();
+            head.itemStack = Items.PLAYER_HEAD.getDefaultInstance();
 
             skull.tags.add(ModelTags.IF_UNPROTECTED);
-            skull.itemStack = Items.SKELETON_SKULL.getDefaultStack();
+            skull.itemStack = Items.SKELETON_SKULL.getDefaultInstance();
 
             model.elements.add(head);
             model.elements.add(skull);
@@ -70,12 +70,12 @@ public class DefaultGraveModels {
 
         {
             var lock = new ItemDisplayModelPart();
-            lock.transformation = new AffineTransformation(
+            lock.transformation = new Transformation(
                     new Matrix4f().translate(0, -0.44f, 0.3f).scale(0.35f, 0.35f, 0.1f)
             );
             lock.transformation.getTranslation();
             lock.viewRange = 0.2f;
-            lock.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            lock.billboardMode = Display.BillboardConstraints.CENTER;
 
             lock.tags.add(ModelTags.IF_REQUIRE_PAYMENT);
             lock.itemStack = IconItem.of(IconItem.Texture.REMOVE_PROTECTION);
@@ -85,13 +85,13 @@ public class DefaultGraveModels {
 
         {
             var lockText = new TextDisplayModelPart();
-            lockText.transformation = new AffineTransformation(
+            lockText.transformation = new Transformation(
                     new Matrix4f().translate(0, -0.31f, 0.3f).scale(0.35f)
             );
             lockText.textShadow = true;
             lockText.transformation.getTranslation();
             lockText.viewRange = 0.2f;
-            lockText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            lockText.billboardMode = Display.BillboardConstraints.CENTER;
 
             lockText.tags.add(ModelTags.IF_REQUIRE_PAYMENT);
             lockText.text = TaggedText.of("<yellow>${cost}");
@@ -100,13 +100,13 @@ public class DefaultGraveModels {
         }
 
         addGenericText(model, customText -> {
-            customText.transformation = new AffineTransformation(
+            customText.transformation = new Transformation(
                     new Matrix4f().translate(0, 0.25f, 0).scale(0.4f)
             );
             customText.textWidth = 9999;
             customText.textShadow = true;
             customText.brightness = new Brightness(15, 15);
-            customText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            customText.billboardMode = Display.BillboardConstraints.CENTER;
             customText.viewRange = 0.5f;
         });
 
@@ -120,11 +120,11 @@ public class DefaultGraveModels {
             var pearl = new EntityModelPart();
 
             eye.entityType = EntityType.EYE_OF_ENDER;
-            eye.position = Vec3d.ZERO;
+            eye.position = Vec3.ZERO;
             eye.tags.add(ModelTags.IF_PROTECTED);
 
             pearl.entityType = EntityType.ENDER_PEARL;
-            pearl.position = Vec3d.ZERO;
+            pearl.position = Vec3.ZERO;
             pearl.tags.add(ModelTags.IF_UNPROTECTED);
 
             model.elements.add(eye);
@@ -143,12 +143,12 @@ public class DefaultGraveModels {
 
         {
             var lock = new ItemDisplayModelPart();
-            lock.transformation = new AffineTransformation(
+            lock.transformation = new Transformation(
                     new Matrix4f().translate(0, -0.44f, 0.3f).scale(0.35f, 0.35f, 0.1f)
             );
             lock.transformation.getTranslation();
             lock.viewRange = 0.2f;
-            lock.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            lock.billboardMode = Display.BillboardConstraints.CENTER;
 
             lock.tags.add(ModelTags.IF_REQUIRE_PAYMENT);
             lock.itemStack = IconItem.of(IconItem.Texture.REMOVE_PROTECTION);
@@ -158,13 +158,13 @@ public class DefaultGraveModels {
 
         {
             var lockText = new TextDisplayModelPart();
-            lockText.transformation = new AffineTransformation(
+            lockText.transformation = new Transformation(
                     new Matrix4f().translate(0, -0.31f, 0.3f).scale(0.35f)
             );
             lockText.textShadow = true;
             lockText.transformation.getTranslation();
             lockText.viewRange = 0.2f;
-            lockText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            lockText.billboardMode = Display.BillboardConstraints.CENTER;
 
             lockText.tags.add(ModelTags.IF_REQUIRE_PAYMENT);
             lockText.text = TaggedText.of("<yellow>${cost}");
@@ -173,13 +173,13 @@ public class DefaultGraveModels {
         }
 
         addGenericText(model, customText -> {
-            customText.transformation = new AffineTransformation(
+            customText.transformation = new Transformation(
                     new Matrix4f().translate(0, 0.25f, 0).scale(0.4f)
             );
             customText.textWidth = 9999;
             customText.textShadow = true;
             customText.brightness = new Brightness(15, 15);
-            customText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            customText.billboardMode = Display.BillboardConstraints.CENTER;
             customText.viewRange = 0.5f;
         });
 
@@ -192,8 +192,8 @@ public class DefaultGraveModels {
         {
             var entity = new EntityModelPart();
             entity.entityType = EntityType.SKELETON;
-            entity.position = new Vec3d(0.9, -0.51, 0);
-            entity.entityPose = EntityPose.SLEEPING;
+            entity.position = new Vec3(0.9, -0.51, 0);
+            entity.entityPose = Pose.SLEEPING;
 
             entity.tags.add(ModelTags.IF_UNPROTECTED);
             entity.tags.add(ModelTags.PLAYER_HEAD);
@@ -209,8 +209,8 @@ public class DefaultGraveModels {
         {
             var entity = new EntityModelPart();
             entity.entityType = EntityType.ZOMBIE;
-            entity.position = new Vec3d(0.9, -0.51, 0);
-            entity.entityPose = EntityPose.SLEEPING;
+            entity.position = new Vec3(0.9, -0.51, 0);
+            entity.entityPose = Pose.SLEEPING;
 
             entity.tags.add(ModelTags.IF_PROTECTED);
             entity.tags.add(ModelTags.PLAYER_HEAD);
@@ -227,8 +227,8 @@ public class DefaultGraveModels {
 
         {
             var head = new ItemDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().rotateY(MathHelper.HALF_PI).translate(0, -0.42f, 0).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().rotateY(Mth.HALF_PI).translate(0, -0.42f, 0).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.transformation.getTranslation();
 
@@ -240,8 +240,8 @@ public class DefaultGraveModels {
 
         {
             var head = new TextDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().rotateY(MathHelper.HALF_PI).translate(0, -0.29f, 0).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().rotateY(Mth.HALF_PI).translate(0, -0.29f, 0).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.textShadow = true;
             head.transformation.getTranslation();
@@ -254,13 +254,13 @@ public class DefaultGraveModels {
 
 
         addGenericText(model, customText -> {
-            customText.transformation = new AffineTransformation(
+            customText.transformation = new Transformation(
                     new Matrix4f().translate(0, 0.15f, 0).scale(0.6f)
             );
             customText.textWidth = 9999;
             customText.textShadow = true;
             customText.brightness = new Brightness(15, 15);
-            customText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            customText.billboardMode = Display.BillboardConstraints.CENTER;
             customText.viewRange = 0.5f;
         });
 
@@ -273,8 +273,8 @@ public class DefaultGraveModels {
         {
             var entity = new EntityModelPart();
             entity.entityType = EntityType.SKELETON;
-            entity.position = new Vec3d(0.9, -0.51, 0);
-            entity.entityPose = EntityPose.SLEEPING;
+            entity.position = new Vec3(0.9, -0.51, 0);
+            entity.entityPose = Pose.SLEEPING;
 
             entity.tags.add(ModelTags.IF_UNPROTECTED);
             entity.tags.add(ModelTags.PLAYER_HEAD);
@@ -290,8 +290,8 @@ public class DefaultGraveModels {
         {
             var entity = new EntityModelPart();
             entity.entityType = EntityType.PLAYER;
-            entity.position = new Vec3d(0.9, -0.51, 0);
-            entity.entityPose = EntityPose.SLEEPING;
+            entity.position = new Vec3(0.9, -0.51, 0);
+            entity.entityPose = Pose.SLEEPING;
 
             entity.tags.add(ModelTags.IF_PROTECTED);
             entity.tags.add(ModelTags.PLAYER_HEAD);
@@ -308,8 +308,8 @@ public class DefaultGraveModels {
 
         {
             var head = new ItemDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().rotateY(MathHelper.HALF_PI).translate(0, -0.42f, 0).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().rotateY(Mth.HALF_PI).translate(0, -0.42f, 0).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.transformation.getTranslation();
 
@@ -321,8 +321,8 @@ public class DefaultGraveModels {
 
         {
             var head = new TextDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().rotateY(MathHelper.HALF_PI).translate(0, -0.29f, 0).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().rotateY(Mth.HALF_PI).translate(0, -0.29f, 0).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.textShadow = true;
             head.transformation.getTranslation();
@@ -335,13 +335,13 @@ public class DefaultGraveModels {
 
 
         addGenericText(model, customText -> {
-            customText.transformation = new AffineTransformation(
+            customText.transformation = new Transformation(
                     new Matrix4f().translate(0, 0.1f, 0).scale(0.6f)
             );
             customText.textWidth = 9999;
             customText.textShadow = true;
             customText.brightness = new Brightness(15, 15);
-            customText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            customText.billboardMode = Display.BillboardConstraints.CENTER;
             customText.viewRange = 0.5f;
         });
 
@@ -352,8 +352,8 @@ public class DefaultGraveModels {
         var model = new GraveModel();
         {
             var tool = new ItemDisplayModelPart();
-            tool.transformation = new AffineTransformation(
-                    new Matrix4f().translate(0.4f, -0.495f, -0.2f).rotateY(330 * MathHelper.RADIANS_PER_DEGREE).rotateZ(5 * MathHelper.RADIANS_PER_DEGREE).rotateX(MathHelper.HALF_PI).scale(0.5f)
+            tool.transformation = new Transformation(
+                    new Matrix4f().translate(0.4f, -0.495f, -0.2f).rotateY(330 * Mth.DEG_TO_RAD).rotateZ(5 * Mth.DEG_TO_RAD).rotateX(Mth.HALF_PI).scale(0.5f)
             );
             tool.transformation.getTranslation();
 
@@ -363,8 +363,8 @@ public class DefaultGraveModels {
         }
         {
             var tool = new ItemDisplayModelPart();
-            tool.transformation = new AffineTransformation(
-                    new Matrix4f().translate(-0.35f, -0.43f, -0.05f).rotateY(80 * MathHelper.RADIANS_PER_DEGREE).rotateZ(-30 * MathHelper.RADIANS_PER_DEGREE).rotateX(-160 * MathHelper.RADIANS_PER_DEGREE).scale(0.5f)
+            tool.transformation = new Transformation(
+                    new Matrix4f().translate(-0.35f, -0.43f, -0.05f).rotateY(80 * Mth.DEG_TO_RAD).rotateZ(-30 * Mth.DEG_TO_RAD).rotateX(-160 * Mth.DEG_TO_RAD).scale(0.5f)
             );
             tool.transformation.getTranslation();
 
@@ -375,8 +375,8 @@ public class DefaultGraveModels {
 
         {
             var head = new ItemDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().translate(0, -0.35f, 0).rotateX(-MathHelper.PI / 12).rotateZ(-MathHelper.PI / 64)
+            head.transformation = new Transformation(
+                    new Matrix4f().translate(0, -0.35f, 0).rotateX(-Mth.PI / 12).rotateZ(-Mth.PI / 64)
             );
             head.transformation.getTranslation();
 
@@ -385,10 +385,10 @@ public class DefaultGraveModels {
 
             head.tags.add(ModelTags.IF_PROTECTED);
             head.tags.add(ModelTags.PLAYER_HEAD);
-            head.itemStack = Items.PLAYER_HEAD.getDefaultStack();
+            head.itemStack = Items.PLAYER_HEAD.getDefaultInstance();
 
             skull.tags.add(ModelTags.IF_UNPROTECTED);
-            skull.itemStack = Items.SKELETON_SKULL.getDefaultStack();
+            skull.itemStack = Items.SKELETON_SKULL.getDefaultInstance();
 
             model.elements.add(head);
             model.elements.add(skull);
@@ -396,8 +396,8 @@ public class DefaultGraveModels {
 
         {
             var head = new ItemDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().translate(0, -0.44f, 0.42f).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().translate(0, -0.44f, 0.42f).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.transformation.getTranslation();
 
@@ -409,8 +409,8 @@ public class DefaultGraveModels {
 
         {
             var head = new TextDisplayModelPart();
-            head.transformation = new AffineTransformation(
-                    new Matrix4f().translate(0, -0.31f, 0.42f).rotateX(-MathHelper.PI / 3).scale(0.35f)
+            head.transformation = new Transformation(
+                    new Matrix4f().translate(0, -0.31f, 0.42f).rotateX(-Mth.PI / 3).scale(0.35f)
             );
             head.textShadow = true;
             head.transformation.getTranslation();
@@ -422,13 +422,13 @@ public class DefaultGraveModels {
         }
 
         addGenericText(model, customText -> {
-            customText.transformation = new AffineTransformation(
+            customText.transformation = new Transformation(
                     new Matrix4f().translate(0, 0.1f, 0).scale(0.6f)
             );
             customText.textWidth = 9999;
             customText.textShadow = true;
             customText.brightness = new Brightness(15, 15);
-            customText.billboardMode = DisplayEntity.BillboardMode.CENTER;
+            customText.billboardMode = Display.BillboardConstraints.CENTER;
             customText.viewRange = 0.5f;
         });
 

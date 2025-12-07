@@ -5,37 +5,36 @@ import eu.pb4.graves.model.GraveModelHandler;
 import eu.pb4.graves.other.VisualGraveData;
 import eu.pb4.polymer.virtualentity.api.attachment.BlockBoundAttachment;
 import eu.pb4.sgui.api.gui.SignGui;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.*;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentSerialization;
+import net.minecraft.network.chat.contents.PlainTextContents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import java.util.*;
 
 import static eu.pb4.graves.registry.AbstractGraveBlock.IS_LOCKED;
 
 public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
     public static BlockEntityType<VisualGraveBlockEntity> BLOCK_ENTITY_TYPE;
-    public BlockState replacedBlockState = Blocks.AIR.getDefaultState();
+    public BlockState replacedBlockState = Blocks.AIR.defaultBlockState();
     private VisualGraveData visualData = VisualGraveData.DEFAULT;
     protected boolean isPlayerMade = false;
-    protected Text[] textOverrides = null;
+    protected Component[] textOverrides = null;
     private GraveModelHandler model;
-    private Map<String, Text> cachedPlaceholders;
+    private Map<String, Component> cachedPlaceholders;
 
     public VisualGraveBlockEntity(BlockPos pos, BlockState state) {
         super(BLOCK_ENTITY_TYPE, pos, state);
@@ -53,18 +52,18 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
             this.model.setGrave(this);
         }
 
-        this.markDirty();
+        this.setChanged();
     }
 
     @Override
-    protected void writeData(WriteView view) {
-        super.writeData(view);
-        view.put("BlockState", NbtCompound.CODEC, NbtHelper.fromBlockState(this.replacedBlockState));
-        this.visualData.writeData(view.get("VisualData"));
+    protected void saveAdditional(ValueOutput view) {
+        super.saveAdditional(view);
+        view.store("BlockState", CompoundTag.CODEC, NbtUtils.writeBlockState(this.replacedBlockState));
+        this.visualData.writeData(view.child("VisualData"));
         view.putBoolean("AllowModification", this.isPlayerMade);
 
         if (this.textOverrides != null) {
-            var list = view.getListAppender("TextOverride", TextCodecs.CODEC);
+            var list = view.list("TextOverride", ComponentSerialization.CODEC);
             for (var text : this.textOverrides) {
                 list.add(text);
             }
@@ -73,26 +72,26 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
 
 
     @Override
-    public void readData(ReadView view) {
-        super.readData(view);
+    public void loadAdditional(ValueInput view) {
+        super.loadAdditional(view);
         try {
-            this.visualData = VisualGraveData.readData(view.getReadView("VisualData"));
-            this.replacedBlockState = NbtHelper.toBlockState(Registries.BLOCK, (NbtCompound) Objects.requireNonNull(view.read("BlockState", NbtCompound.CODEC).orElse(new NbtCompound())));
+            this.visualData = VisualGraveData.readData(view.childOrEmpty("VisualData"));
+            this.replacedBlockState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK, (CompoundTag) Objects.requireNonNull(view.read("BlockState", CompoundTag.CODEC).orElse(new CompoundTag())));
 
 
-            var texts = view.getTypedListView("TextOverride", TextCodecs.CODEC);
+            var texts = view.listOrEmpty("TextOverride", ComponentSerialization.CODEC);
 
             if (!texts.isEmpty()) {
                 var textOverrides = new ArrayList<>();
                 for (var text : texts) {
-                    if (text.getSiblings().isEmpty() && text.getContent() instanceof PlainTextContent.Literal literal
-                            && literal.string().length() >= 2 && literal.string().charAt(0) == '"' && literal.string().charAt(literal.string().length() - 1) == '"') {
-                        text = Text.literal(literal.string().substring(1, literal.string().length() - 1));
+                    if (text.getSiblings().isEmpty() && text.getContents() instanceof PlainTextContents.LiteralContents literal
+                            && literal.text().length() >= 2 && literal.text().charAt(0) == '"' && literal.text().charAt(literal.text().length() - 1) == '"') {
+                        text = Component.literal(literal.text().substring(1, literal.text().length() - 1));
                     }
 
                     textOverrides.add(text);
                 }
-                this.textOverrides = textOverrides.toArray(new Text[0]);
+                this.textOverrides = textOverrides.toArray(new Component[0]);
             }
         } catch (Exception e) {
             if (this.visualData == null) {
@@ -102,8 +101,8 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
         this.cachedPlaceholders = null;
     }
 
-    public static <T extends BlockEntity> void tick(World world, BlockPos pos, BlockState state, T t) {
-        if (!(t instanceof VisualGraveBlockEntity self) || world.isClient()) {
+    public static <T extends BlockEntity> void tick(Level world, BlockPos pos, BlockState state, T t) {
+        if (!(t instanceof VisualGraveBlockEntity self) || world.isClientSide()) {
             return;
         }
 
@@ -112,11 +111,11 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
             self.model.setGrave(self);
         }
 
-        self.model.maybeTick(world.getTime());
+        self.model.maybeTick(world.getGameTime());
     }
 
-    protected Map<String, Text> createPlaceholders() {
-        var placeholder = this.getGrave().getPlaceholders(this.world.getServer());
+    protected Map<String, Component> createPlaceholders() {
+        var placeholder = this.getGrave().getPlaceholders(this.level.getServer());
 
         if (this.textOverrides != null) {
             placeholder.put("text_1", this.textOverrides[0]);
@@ -124,10 +123,10 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
             placeholder.put("text_3", this.textOverrides[2]);
             placeholder.put("text_4", this.textOverrides[3]);
         } else {
-            placeholder.put("text_1", Text.empty());
-            placeholder.put("text_2", Text.empty());
-            placeholder.put("text_3", Text.empty());
-            placeholder.put("text_4", Text.empty());
+            placeholder.put("text_1", Component.empty());
+            placeholder.put("text_2", Component.empty());
+            placeholder.put("text_3", Component.empty());
+            placeholder.put("text_4", Component.empty());
         }
         return placeholder;
     }
@@ -148,18 +147,18 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
         }
     }
 
-    public void openEditScreen(ServerPlayerEntity player) {
+    public void openEditScreen(ServerPlayer player) {
         var sign = new SignGui(player) {
             @Override
             public void onClose() {
-                VisualGraveBlockEntity.this.textOverrides = new Text[]{
+                VisualGraveBlockEntity.this.textOverrides = new Component[]{
                         this.getLine(0),
                         this.getLine(1),
                         this.getLine(2),
                         this.getLine(3)
                 };
                 VisualGraveBlockEntity.this.cachedPlaceholders = null;
-                VisualGraveBlockEntity.this.markDirty();
+                VisualGraveBlockEntity.this.setChanged();
             }
         };
         sign.setSignType(Blocks.BIRCH_SIGN);
@@ -182,7 +181,7 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
 
     @Override
     public boolean isGraveProtected() {
-        return this.getCachedState().get(IS_LOCKED);
+        return this.getBlockState().getValue(IS_LOCKED);
     }
 
     @Override
@@ -201,7 +200,7 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
     }
 
     @Override
-    public Text getGravePlaceholder(String id) {
+    public Component getGravePlaceholder(String id) {
         var x = this.cachedPlaceholders;
         if (x == null) {
             x = this.createPlaceholders();
@@ -212,7 +211,7 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
     }
 
     @Override
-    public ProfileComponent getGraveGameProfile() {
+    public ResolvableProfile getGraveGameProfile() {
         return this.getGrave().profile();
     }
 
@@ -227,7 +226,7 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
     }
 
     @Override
-    public Arm getGraveMainArm() {
+    public HumanoidArm getGraveMainArm() {
         return this.getGrave().mainArm();
     }
 

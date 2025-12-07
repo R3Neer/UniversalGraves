@@ -3,86 +3,85 @@ package eu.pb4.graves.registry;
 import com.mojang.authlib.GameProfile;
 import eu.pb4.graves.other.VisualGraveData;
 import eu.pb4.sgui.api.gui.SimpleGui;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.ShovelItem;
-import net.minecraft.network.packet.s2c.play.PlaySoundS2CPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.ItemScatterer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Util;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.RotationPropertyHelper;
-import net.minecraft.world.World;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.RotationSegment;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 public class ContainerGraveBlock extends VisualGraveBlock {
-    public ContainerGraveBlock(Settings settings) {
+    public ContainerGraveBlock(Properties settings) {
         super(settings);
     }
 
     @Nullable
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ContainerGraveBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
         return ContainerGraveBlockEntity::tick;
     }
 
     @Override
-    public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
         if (placer != null) {
             var optional = world.getBlockEntity(pos, ContainerGraveBlockEntity.BLOCK_ENTITY_TYPE);
             if (optional.isPresent()) {
-                optional.get().textOverrides = new Text[]{Text.empty(), Text.empty(), Text.empty(), Text.empty()};
+                optional.get().textOverrides = new Component[]{Component.empty(), Component.empty(), Component.empty(), Component.empty()};
             }
         }
     }
 
     @Override
-    protected void onStateReplaced(BlockState state, ServerWorld world, BlockPos pos, boolean moved) {
-        ItemScatterer.onStateReplaced(state, world, pos);
-        super.onStateReplaced(state, world, pos, moved);
+    protected void affectNeighborsAfterRemoval(BlockState state, ServerLevel world, BlockPos pos, boolean moved) {
+        Containers.updateNeighboursAfterDestroy(state, world, pos);
+        super.affectNeighborsAfterRemoval(state, world, pos, moved);
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity entity,  BlockHitResult hit) {
-        if (entity instanceof ServerPlayerEntity player && !player.isSneaking()) {
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player entity,  BlockHitResult hit) {
+        if (entity instanceof ServerPlayer player && !player.isShiftKeyDown()) {
             var blockEntityOptional = world.getBlockEntity(pos, ContainerGraveBlockEntity.BLOCK_ENTITY_TYPE);
 
             if (blockEntityOptional.isPresent() && blockEntityOptional.get().isPlayerMade) {
                 var grave = blockEntityOptional.get();
 
-                var itemStack = player.getStackInHand(Hand.MAIN_HAND);
+                var itemStack = player.getItemInHand(InteractionHand.MAIN_HAND);
                 if (itemStack.getItem() == Items.FEATHER) {
                     grave.openEditScreen(player);
                 } else if (itemStack.getItem() == Items.PLAYER_HEAD) {
-                    if (itemStack.contains(DataComponentTypes.PROFILE)) {
+                    if (itemStack.has(DataComponents.PROFILE)) {
                         grave.setVisualData(new VisualGraveData(
-                                itemStack.get(DataComponentTypes.PROFILE),
+                                itemStack.get(DataComponents.PROFILE),
                                 grave.getGraveSkinModelLayers(),
                                 grave.getGraveMainArm(),
                                 grave.getGrave().deathCause(),
@@ -90,7 +89,7 @@ public class ContainerGraveBlock extends VisualGraveBlock {
                                 grave.getGrave().location(), grave.getGrave().minecraftDay()), grave.replacedBlockState);
                     } else {
                         grave.setVisualData(new VisualGraveData(
-                                ProfileComponent.ofStatic(new GameProfile(Util.NIL_UUID, "Player")),
+                                ResolvableProfile.createResolved(new GameProfile(Util.NIL_UUID, "Player")),
                                 grave.getGraveSkinModelLayers(),
                                 grave.getGraveMainArm(),
                                 grave.getGrave().deathCause(),
@@ -98,25 +97,25 @@ public class ContainerGraveBlock extends VisualGraveBlock {
                                 grave.getGrave().location(), grave.getGrave().minecraftDay()), grave.replacedBlockState);
                     }
                 } else if (itemStack.getItem() == Items.MOSS_BLOCK) {
-                    world.setBlockState(pos, state.with(IS_LOCKED, false));
+                    world.setBlockAndUpdate(pos, state.setValue(IS_LOCKED, false));
                     grave.updateModel();
                 } else if (itemStack.getItem() == Items.SPONGE || itemStack.getItem() == Items.WET_SPONGE) {
-                    world.setBlockState(pos, state.with(IS_LOCKED, true));
+                    world.setBlockAndUpdate(pos, state.setValue(IS_LOCKED, true));
                     grave.updateModel();
                 } else if (itemStack.getItem() instanceof ShovelItem) {
-                    int val = state.get(Properties.ROTATION) + (player.isSneaking() ? -1 : 1);
+                    int val = state.getValue(BlockStateProperties.ROTATION_16) + (player.isShiftKeyDown() ? -1 : 1);
                     if (val < 0) {
-                        val = RotationPropertyHelper.getMax();
-                    } else if (val > RotationPropertyHelper.getMax()) {
+                        val = RotationSegment.getMaxSegmentIndex();
+                    } else if (val > RotationSegment.getMaxSegmentIndex()) {
                         val = 0;
                     }
 
-                    world.setBlockState(pos, state.with(Properties.ROTATION, val));
+                    world.setBlockAndUpdate(pos, state.setValue(BlockStateProperties.ROTATION_16, val));
                 } else {
-                    var gui = new SimpleGui(ScreenHandlerType.GENERIC_3X3, player, false) {
+                    var gui = new SimpleGui(MenuType.GENERIC_3x3, player, false) {
                         @Override
                         public void onTick() {
-                            if (grave.isRemoved() || grave.getPos().getSquaredDistanceFromCenter(player.getX(), player.getY(), player.getZ()) > 256) {
+                            if (grave.isRemoved() || grave.getBlockPos().distToCenterSqr(player.getX(), player.getY(), player.getZ()) > 256) {
                                 this.close();
                             }
                         }
@@ -124,7 +123,7 @@ public class ContainerGraveBlock extends VisualGraveBlock {
                         @Override
                         public void onClose() {
                             super.onClose();
-                            player.networkHandler.sendPacket(new PlaySoundS2CPacket(Registries.SOUND_EVENT.getEntry(SoundEvents.BLOCK_BARREL_CLOSE), SoundCategory.BLOCKS,
+                            player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BARREL_CLOSE), SoundSource.BLOCKS,
                                     pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, world.random.nextFloat() * 0.1F + 0.9F, world.random.nextLong()));
                         }
                     };
@@ -133,15 +132,15 @@ public class ContainerGraveBlock extends VisualGraveBlock {
                         gui.setSlotRedirect(i, new Slot(grave, i, 0, 0));
                     }
                     gui.open();
-                    player.networkHandler.sendPacket(new PlaySoundS2CPacket(Registries.SOUND_EVENT.getEntry(SoundEvents.BLOCK_BARREL_OPEN), SoundCategory.BLOCKS,
+                    player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BARREL_OPEN), SoundSource.BLOCKS,
                             pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, world.random.nextFloat() * 0.1F + 0.9F, world.random.nextLong()));
                 }
 
-                return ActionResult.SUCCESS_SERVER;
+                return InteractionResult.SUCCESS_SERVER;
             }
         }
 
-        return entity.isSneaking() ? ActionResult.PASS : ActionResult.SUCCESS_SERVER;
+        return entity.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.SUCCESS_SERVER;
     }
 
 }

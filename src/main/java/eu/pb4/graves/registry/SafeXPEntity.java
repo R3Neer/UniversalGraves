@@ -5,49 +5,47 @@ import eu.pb4.graves.mixin.ExperienceOrbEntityAccessor;
 import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.polymer.core.api.entity.PolymerEntity;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.ExperienceOrbEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import xyz.nucleoid.packettweaker.PacketContext;
 
-public class SafeXPEntity extends ExperienceOrbEntity implements PolymerEntity {
+public class SafeXPEntity extends ExperienceOrb implements PolymerEntity {
     public static EntityType<Entity> TYPE = FabricEntityTypeBuilder.create().entityFactory(SafeXPEntity::new).fireImmune().disableSummon().dimensions(EntityDimensions.fixed(0.5F, 0.5F)).trackRangeChunks(6).trackedUpdateRate(20).build(
-            RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of("universal_graves", "xp"))
+            ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("universal_graves", "xp"))
     );
-    public SafeXPEntity(World world, double x, double y, double z, int amount) {
+    public SafeXPEntity(Level world, double x, double y, double z, int amount) {
         this(TYPE, world);
-        this.setPosition(x, y, z);
-        this.setYaw((float)(this.random.nextDouble() * 360.0D));
-        this.setVelocity((this.random.nextDouble() * 0.20000000298023224D - 0.10000000149011612D) * 2.0D, this.random.nextDouble() * 0.2D * 2.0D, (this.random.nextDouble() * 0.20000000298023224D - 0.10000000149011612D) * 2.0D);
+        this.setPos(x, y, z);
+        this.setYRot((float)(this.random.nextDouble() * 360.0D));
+        this.setDeltaMovement((this.random.nextDouble() * 0.20000000298023224D - 0.10000000149011612D) * 2.0D, this.random.nextDouble() * 0.2D * 2.0D, (this.random.nextDouble() * 0.20000000298023224D - 0.10000000149011612D) * 2.0D);
         ((ExperienceOrbEntityAccessor) this).callSetValue(amount);
     }
 
-    public SafeXPEntity(EntityType<Entity> entityType, World world) {
+    public SafeXPEntity(EntityType<Entity> entityType, Level world) {
         //noinspection unchecked
-        super((EntityType<? extends ExperienceOrbEntity>) (Object) entityType, world);
+        super((EntityType<? extends ExperienceOrb>) (Object) entityType, world);
     }
 
-    public static void spawn(ServerWorld world, Vec3d pos, int amount) {
-        world.spawnEntity(new SafeXPEntity(world, pos.getX(), pos.getY(), pos.getZ(), amount));
+    public static void award(ServerLevel world, Vec3 pos, int amount) {
+        world.addFreshEntity(new SafeXPEntity(world, pos.x(), pos.y(), pos.z(), amount));
     }
 
     @Override
-    public void onPlayerCollision(PlayerEntity player) {
-        if (!this.getEntityWorld().isClient()) {
+    public void playerTouch(Player player) {
+        if (!this.level().isClientSide()) {
             // Clones vanilla logic to make sure other mods don't modify it
-            if (player.experiencePickUpDelay == 0) {
-                player.experiencePickUpDelay = 2;
-                player.sendPickup(this, 1);
+            if (player.takeXpDelay == 0) {
+                player.takeXpDelay = 2;
+                player.take(this, 1);
                 GraveUtils.grandExperience(player, this.getValue());
 
                 this.discard();

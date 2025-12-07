@@ -13,13 +13,13 @@ import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.graves.other.Location;
 import eu.pb4.graves.other.VanillaInventoryMask;
 import net.fabricmc.fabric.api.event.Event;
-import net.minecraft.component.EnchantmentEffectComponentTypes;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -44,11 +44,11 @@ public final class GravesApi {
         return ImmutableList.copyOf(GraveManager.INSTANCE.getAll());
     }
 
-    public static boolean canAddItem(ServerPlayerEntity player, ItemStack itemStack) {
+    public static boolean canAddItem(ServerPlayer player, ItemStack itemStack) {
         return !itemStack.isEmpty()
-                && PlayerGraveItemAddedEvent.EVENT.invoker().canAddItem(player, itemStack) != ActionResult.FAIL
+                && PlayerGraveItemAddedEvent.EVENT.invoker().canAddItem(player, itemStack) != InteractionResult.FAIL
                 && !GraveUtils.hasSkippedEnchantment(itemStack)
-                && !EnchantmentHelper.hasAnyEnchantmentsWith(itemStack, EnchantmentEffectComponentTypes.PREVENT_EQUIPMENT_DROP);
+                && !EnchantmentHelper.has(itemStack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP);
     }
 
     @Nullable

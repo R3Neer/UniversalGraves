@@ -2,17 +2,17 @@ package eu.pb4.graves.grave;
 
 import eu.pb4.graves.GravesApi;
 import eu.pb4.graves.model.ModelTags;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public interface GraveInventoryMask {
-    void addToGrave(ServerPlayerEntity player, ItemConsumer itemStackConsumer);
+    void addToGrave(ServerPlayer player, ItemConsumer itemStackConsumer);
 
-    boolean moveToPlayerExactly(ServerPlayerEntity player, ItemStack stack, int slot, @Nullable NbtElement optionalData);
-    boolean moveToPlayerClosest(ServerPlayerEntity player, ItemStack stack, int slot, @Nullable NbtElement optionalData);
+    boolean moveToPlayerExactly(ServerPlayer player, ItemStack stack, int slot, @Nullable Tag optionalData);
+    boolean moveToPlayerClosest(ServerPlayer player, ItemStack stack, int slot, @Nullable Tag optionalData);
 
     default Identifier getId() {
         return GravesApi.getInventoryMaskId(this);
@@ -27,10 +27,10 @@ public interface GraveInventoryMask {
             this.addItem(stack, slot, null, tags);
         }
 
-        default void addItem(ItemStack stack, int slot, @Nullable NbtElement nbtElement) {
+        default void addItem(ItemStack stack, int slot, @Nullable Tag nbtElement) {
             this.addItem(stack, slot, nbtElement, new Identifier[0]);
         };
 
-        void addItem(ItemStack stack, int slot, @Nullable NbtElement nbtElement, Identifier... tags);
+        void addItem(ItemStack stack, int slot, @Nullable Tag nbtElement, Identifier... tags);
     }
 }

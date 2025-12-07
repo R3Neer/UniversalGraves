@@ -6,29 +6,27 @@ import io.wispforest.accessories.api.*;
 import io.wispforest.accessories.api.events.OnDropCallback;
 import io.wispforest.accessories.api.slot.SlotReference;
 import io.wispforest.accessories.impl.ExpandedSimpleContainer;
-import net.minecraft.component.EnchantmentEffectComponentTypes;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.inventory.StackReference;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public record AccessoriesCompat() implements GraveInventoryMask {
     private static final String TYPE_TAG = "Type";
     private static final String SLOT_TAG = "Slot";
 
     public static void register() {
-        GravesApi.registerInventoryMask(Identifier.of("universal_graves", "accessories"), new AccessoriesCompat());
+        GravesApi.registerInventoryMask(Identifier.fromNamespaceAndPath("universal_graves", "accessories"), new AccessoriesCompat());
     }
 
     @Override
-    public void addToGrave(ServerPlayerEntity player, ItemConsumer consumer) {
+    public void addToGrave(ServerPlayer player, ItemConsumer consumer) {
         var cap = AccessoriesCapability.get(player);
         if (cap == null) {
             return;
@@ -41,13 +39,13 @@ public record AccessoriesCompat() implements GraveInventoryMask {
         });
     }
 
-    private void addToGrave(ServerPlayerEntity player, ItemConsumer consumer, String slotName, ExpandedSimpleContainer accessories, String type, DropRule defaultDropRule) {
-        var dmg = player.getRecentDamageSource();
+    private void addToGrave(ServerPlayer player, ItemConsumer consumer, String slotName, ExpandedSimpleContainer accessories, String type, DropRule defaultDropRule) {
+        var dmg = player.getLastDamageSource();
         if (dmg == null) {
-            dmg = player.getDamageSources().generic();
+            dmg = player.damageSources().generic();
         }
-        for (var i = 0; i < accessories.size(); i++) {
-            var stack = accessories.getStack(i);
+        for (var i = 0; i < accessories.getContainerSize(); i++) {
+            var stack = accessories.getItem(i);
             if (stack.isEmpty() || !GravesApi.canAddItem(player, stack)) {
                 return;
             }
@@ -63,7 +61,7 @@ public record AccessoriesCompat() implements GraveInventoryMask {
             }
 
             if (dropRule == DropRule.DEFAULT) {
-                if (EnchantmentHelper.hasAnyEnchantmentsWith(stack, EnchantmentEffectComponentTypes.PREVENT_EQUIPMENT_DROP)) {
+                if (EnchantmentHelper.has(stack, EnchantmentEffectComponents.PREVENT_EQUIPMENT_DROP)) {
                     dropRule = DropRule.DESTROY;
                 } else {
                     dropRule = DropRule.DROP;
@@ -71,26 +69,26 @@ public record AccessoriesCompat() implements GraveInventoryMask {
             }
 
             if (dropRule == DropRule.DROP) {
-                var nbt = new NbtCompound();
+                var nbt = new CompoundTag();
                 nbt.putString(TYPE_TAG, type);
                 nbt.putString(SLOT_TAG, slotName);
 
                 consumer.addItem(stack.copy(), i, nbt);
-                accessories.setStack(i, ItemStack.EMPTY);
+                accessories.setItem(i, ItemStack.EMPTY);
             }
         }
     }
 
     @Override
-    public boolean moveToPlayerExactly(ServerPlayerEntity player, ItemStack stack, int slot, NbtElement extraData) {
-        var typeId = ((NbtCompound) extraData).getString(TYPE_TAG, "");
-        var slotId = ((NbtCompound) extraData).getString(SLOT_TAG, "");
+    public boolean moveToPlayerExactly(ServerPlayer player, ItemStack stack, int slot, Tag extraData) {
+        var typeId = ((CompoundTag) extraData).getStringOr(TYPE_TAG, "");
+        var slotId = ((CompoundTag) extraData).getStringOr(SLOT_TAG, "");
 
         var inventory = getInventory(player, typeId, slotId);
 
         if (inventory != null) {
-            if (inventory.getStack(slot).isEmpty()) {
-                inventory.setStack(slot, stack.copyAndEmpty());
+            if (inventory.getItem(slot).isEmpty()) {
+                inventory.setItem(slot, stack.copyAndClear());
                 return true;
             }
         }
@@ -98,18 +96,18 @@ public record AccessoriesCompat() implements GraveInventoryMask {
     }
 
     @Override
-    public boolean moveToPlayerClosest(ServerPlayerEntity player, ItemStack stack, int slot, NbtElement data) {
-        var type = ((NbtCompound) data).getString(TYPE_TAG, "");
-        var slotId = ((NbtCompound) data).getString(SLOT_TAG, "");
+    public boolean moveToPlayerClosest(ServerPlayer player, ItemStack stack, int slot, Tag data) {
+        var type = ((CompoundTag) data).getStringOr(TYPE_TAG, "");
+        var slotId = ((CompoundTag) data).getStringOr(SLOT_TAG, "");
 
         var inventory = getInventory(player, type, slotId);
 
         if (inventory != null) {
-            int size = inventory.size();
+            int size = inventory.getContainerSize();
 
             for (int i = 0; i < size; i++) {
-                if (inventory.getStack(i).isEmpty()) {
-                    inventory.setStack(i, stack.copyAndEmpty());
+                if (inventory.getItem(i).isEmpty()) {
+                    inventory.setItem(i, stack.copyAndClear());
                     return true;
                 }
             }
@@ -118,7 +116,7 @@ public record AccessoriesCompat() implements GraveInventoryMask {
     }
 
     @Nullable
-    private ExpandedSimpleContainer getInventory(ServerPlayerEntity player, String type, String slotId) {
+    private ExpandedSimpleContainer getInventory(ServerPlayer player, String type, String slotId) {
         var cap = AccessoriesCapability.get(player);
         if (cap == null) {
             return null;

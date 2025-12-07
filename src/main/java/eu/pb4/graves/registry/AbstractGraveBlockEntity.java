@@ -4,19 +4,17 @@ import eu.pb4.graves.GravesMod;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.model.ModelDataProvider;
 import eu.pb4.graves.other.VisualGraveData;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 
 public abstract class AbstractGraveBlockEntity extends BlockEntity implements ModelDataProvider {
-    protected static final Text EMPTY_TEXT = Text.empty();
+    protected static final Component EMPTY_TEXT = Component.empty();
 
     private String model = ConfigManager.getConfig().model.defaultModelId;
 
@@ -25,15 +23,15 @@ public abstract class AbstractGraveBlockEntity extends BlockEntity implements Mo
     }
 
     @Override
-    protected void writeData(WriteView view) {
-        super.writeData(view);
+    protected void saveAdditional(ValueOutput view) {
+        super.saveAdditional(view);
         view.putString("GraveModel", this.model);
     }
 
     @Override
-    public void readData(ReadView view) {
-        super.readData(view);
-        this.model = view.getString("GraveModel", "default");
+    public void loadAdditional(ValueInput view) {
+        super.loadAdditional(view);
+        this.model = view.getStringOr("GraveModel", "default");
         this.onModelChanged(this.model);
 
     }
@@ -46,7 +44,7 @@ public abstract class AbstractGraveBlockEntity extends BlockEntity implements Mo
     public void setModelId(String model) {
         this.model = model;
         this.onModelChanged(model);
-        this.markDirty();
+        this.setChanged();
     }
 
 

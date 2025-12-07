@@ -2,9 +2,7 @@ package eu.pb4.graves.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 
 /**
  * This event is called before grave is created to check if it's allowed
@@ -22,7 +20,7 @@ public interface PlayerGraveCreationEvent {
                     return result;
                 });
 
-    CreationResult shouldCreate(ServerPlayerEntity player);
+    CreationResult shouldCreate(ServerPlayer player);
 
     enum CreationResult {
         ALLOW(true),

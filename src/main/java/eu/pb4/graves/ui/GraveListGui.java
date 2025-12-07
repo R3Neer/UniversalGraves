@@ -5,14 +5,13 @@ import eu.pb4.graves.GraveTextures;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.grave.Grave;
 import eu.pb4.graves.grave.GraveManager;
-import net.minecraft.server.PlayerConfigEntry;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.NameAndId;
 
 public class GraveListGui extends PagedGui {
     private final UUID targetUUID;
@@ -21,11 +20,11 @@ public class GraveListGui extends PagedGui {
     private List<Grave> graves;
     private boolean canFetch;
 
-    public GraveListGui(ServerPlayerEntity player, PlayerConfigEntry profile, boolean canModify, boolean canFetch) {
+    public GraveListGui(ServerPlayer player, NameAndId profile, boolean canModify, boolean canFetch) {
         super(player);
         this.targetUUID = profile.id();
 
-        this.setTitle(ConfigManager.getConfig().ui.graveTitle.with(Map.of("player", Text.literal(profile.name()))));
+        this.setTitle(ConfigManager.getConfig().ui.graveTitle.with(Map.of("player", Component.literal(profile.name()))));
         this.graves = new ArrayList<>(GraveManager.INSTANCE.getByUuid(this.targetUUID));
         this.canModify = canModify;
         this.canFetch = canFetch;
@@ -44,7 +43,7 @@ public class GraveListGui extends PagedGui {
 
             var grave = this.graves.get(id);
 
-            var placeholders = grave.getPlaceholders(this.player.getEntityWorld().getServer());
+            var placeholders = grave.getPlaceholders(this.player.level().getServer());
 
             var element = config.ui.listGraveIcon.get(grave.isProtected()).builder(placeholders)
                     .setCallback((index, type, action) -> {

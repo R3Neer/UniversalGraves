@@ -4,9 +4,8 @@ import com.mojang.authlib.GameProfile;
 import eu.pb4.graves.other.GraveUtils;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 /**
  * This even is use for checking, if graves is in valid position
@@ -24,5 +23,5 @@ public interface GraveValidPosCheckEvent {
                     return result;
                 });
 
-    GraveUtils.BlockResult isValid(GameProfile player, ServerWorld world, BlockPos pos);
+    GraveUtils.BlockResult isValid(GameProfile player, ServerLevel world, BlockPos pos);
 }

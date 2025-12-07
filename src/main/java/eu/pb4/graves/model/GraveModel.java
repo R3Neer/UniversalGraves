@@ -3,12 +3,11 @@ package eu.pb4.graves.model;
 import com.google.gson.annotations.SerializedName;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.model.parts.ModelPart;
-import net.minecraft.util.Identifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.resources.Identifier;
 
 public class GraveModel {
     @SerializedName("format")

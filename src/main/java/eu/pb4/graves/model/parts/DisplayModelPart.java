@@ -1,19 +1,19 @@
 package eu.pb4.graves.model.parts;
 
 import com.google.gson.annotations.SerializedName;
+import com.mojang.math.Transformation;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.polymer.virtualentity.api.elements.DisplayElement;
-import net.minecraft.entity.EntityDimensions;
-import net.minecraft.entity.decoration.Brightness;
-import net.minecraft.entity.decoration.DisplayEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.AffineTransformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Brightness;
+import net.minecraft.world.entity.Display;
+import net.minecraft.world.entity.EntityDimensions;
 
 public abstract class DisplayModelPart<T extends DisplayElement, G extends DisplayModelPart<T, G>> extends ModelPart<T, G> {
     @SerializedName("transformation")
-    public AffineTransformation transformation = AffineTransformation.identity();
+    public Transformation transformation = Transformation.identity();
     @SerializedName("billboard")
-    public DisplayEntity.BillboardMode billboardMode = DisplayEntity.BillboardMode.FIXED;
+    public Display.BillboardConstraints billboardMode = Display.BillboardConstraints.FIXED;
     @SerializedName("brightness")
     public Brightness brightness;
     @SerializedName("view_range")
@@ -28,7 +28,7 @@ public abstract class DisplayModelPart<T extends DisplayElement, G extends Displ
     public int glowColor = -1;
 
     @Override
-    public T construct(ServerWorld world) {
+    public T construct(ServerLevel world) {
         var base = constructBase();
         base.setOffset(this.position);
         if (this.glowColor != -1) {

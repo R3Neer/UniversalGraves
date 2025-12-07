@@ -11,20 +11,13 @@ import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
 import eu.pb4.polymer.virtualentity.api.VirtualEntityUtils;
 import eu.pb4.polymer.virtualentity.api.elements.EntityElement;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.storage.NbtReadView;
-import net.minecraft.util.ErrorReporter;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -39,23 +32,23 @@ public class EntityModelPart extends ModelPart<EntityElement<?>, EntityModelPart
 
     @SerializedName("entity_nbt")
     @Nullable
-    public NbtCompound nbtCompound;
+    public CompoundTag nbtCompound;
 
     @SerializedName("entity_pose")
     @Nullable
-    public EntityPose entityPose;
+    public Pose entityPose;
 
 
     @Override
-    public EntityElement<?> construct(ServerWorld world) {
+    public EntityElement<?> construct(ServerLevel world) {
         if (entityType == EntityType.PLAYER) {
             entityType = EntityType.MANNEQUIN;
         }
 
-        var entity = entityType.create(world, SpawnReason.COMMAND);
+        var entity = entityType.create(world, EntitySpawnReason.COMMAND);
 
         if (nbtCompound != null) {
-            entity.readData(NbtReadView.create(ErrorReporter.EMPTY, world.getRegistryManager(), this.nbtCompound));
+            entity.load(TagValueInput.create(ProblemReporter.DISCARDING, world.registryAccess(), this.nbtCompound));
         }
 
         if (entityPose != null) {

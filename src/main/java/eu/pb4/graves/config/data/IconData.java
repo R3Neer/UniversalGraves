@@ -2,18 +2,17 @@ package eu.pb4.graves.config.data;
 
 import eu.pb4.graves.registry.IconItem;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public record IconData(ItemStack baseStack, List<WrappedText> text) {
 
-    public GuiElementBuilder builder(Map<String, Text> textMap) {
-        var list = new ArrayList<Text>();
+    public GuiElementBuilder builder(Map<String, Component> textMap) {
+        var list = new ArrayList<Component>();
         for (var x : text) {
             list.add(x.with(textMap));
         }
@@ -30,7 +29,7 @@ public record IconData(ItemStack baseStack, List<WrappedText> text) {
     }
 
     public static IconData of(Item icon, List<String> texts) {
-        return new IconData(icon.getDefaultStack(), parseTexts(texts));
+        return new IconData(icon.getDefaultInstance(), parseTexts(texts));
     }
 
     public static IconData of(IconItem.Texture texture, String... text) {

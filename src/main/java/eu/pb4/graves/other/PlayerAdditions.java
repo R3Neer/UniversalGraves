@@ -1,11 +1,11 @@
 package eu.pb4.graves.other;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 public interface PlayerAdditions {
     @Nullable
-    Text graves$lastDeathCause();
+    Component graves$lastDeathCause();
 
     @Nullable
     long graves$lastGrave();

@@ -4,8 +4,6 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.datafixers.DSL;
 import com.mojang.datafixers.schemas.Schema;
 import com.mojang.datafixers.types.templates.TypeTemplate;
-import net.minecraft.datafixer.TypeReferences;
-import net.minecraft.datafixer.schema.Schema1460;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -15,8 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Map;
 import java.util.function.Supplier;
+import net.minecraft.util.datafix.schemas.V1460;
 
-@Mixin(Schema1460.class)
+@Mixin(V1460.class)
 public abstract class Schema1460Mixin extends Schema {
     @Shadow protected static void registerInventory(Schema schema, Map<String, Supplier<TypeTemplate>> map, String name) {}
 

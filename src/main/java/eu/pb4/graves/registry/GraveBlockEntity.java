@@ -10,39 +10,38 @@ import eu.pb4.graves.grave.GraveManager;
 import eu.pb4.graves.model.GraveModelHandler;
 import eu.pb4.graves.other.VisualGraveData;
 import eu.pb4.polymer.virtualentity.api.attachment.BlockBoundAttachment;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.text.Text;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import static eu.pb4.graves.registry.AbstractGraveBlock.IS_LOCKED;
 
 public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveHolder {
     public static BlockEntityType<GraveBlockEntity> BLOCK_ENTITY_TYPE;
-    public BlockState replacedBlockState = Blocks.AIR.getDefaultState();
+    public BlockState replacedBlockState = Blocks.AIR.defaultBlockState();
     private Grave data = null;
     private VisualGraveData visualData = VisualGraveData.DEFAULT;
     private long graveId = -1;
     private GraveModelHandler model;
     private int selfDestructTimer = 0;
-    private Map<String, Text> cachedPlaceholders;
+    private Map<String, Component> cachedPlaceholders;
 
     public GraveBlockEntity(BlockPos pos, BlockState state) {
         super(BLOCK_ENTITY_TYPE, pos, state);
@@ -63,31 +62,31 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
             this.graveId = -1;
         }
         this.selfDestructTimer = 0;
-        this.markDirty();
+        this.setChanged();
     }
 
     @Override
-    protected void writeData(WriteView view) {
-        super.writeData(view);
-        view.put("BlockState", NbtCompound.CODEC, NbtHelper.fromBlockState(this.replacedBlockState));
-        this.getClientData().writeData(view.get("VisualData"));
+    protected void saveAdditional(ValueOutput view) {
+        super.saveAdditional(view);
+        view.store("BlockState", CompoundTag.CODEC, NbtUtils.writeBlockState(this.replacedBlockState));
+        this.getClientData().writeData(view.child("VisualData"));
         view.putLong("GraveId", this.graveId);
     }
 
 
     @Override
-    public void readData(ReadView view) {
-        super.readData(view);
+    public void loadAdditional(ValueInput view) {
+        super.loadAdditional(view);
         try {
-            this.graveId = view.getLong("GraveId", -1);
+            this.graveId = view.getLongOr("GraveId", -1);
 
             this.fetchGraveData();
 
             if (this.visualData == null) {
-                this.visualData = VisualGraveData.readData(view.getReadView("VisualData"));
+                this.visualData = VisualGraveData.readData(view.childOrEmpty("VisualData"));
             }
             this.selfDestructTimer = 0;
-            this.replacedBlockState = NbtHelper.toBlockState(Registries.BLOCK, (NbtCompound) Objects.requireNonNull(view.read(  "BlockState", NbtCompound.CODEC).orElse(new NbtCompound())));
+            this.replacedBlockState = NbtUtils.readBlockState(BuiltInRegistries.BLOCK, (CompoundTag) Objects.requireNonNull(view.read(  "BlockState", CompoundTag.CODEC).orElse(new CompoundTag())));
         } catch (Exception e) {
             this.visualData = VisualGraveData.DEFAULT;
         }
@@ -99,34 +98,34 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
         if (this.data != null) {
             this.visualData = this.data.toVisualGraveData();
             this.updateForAllPlayers();
-            this.markDirty();
+            this.setChanged();
         }
     }
 
     @Override
-    public void onBlockReplaced(BlockPos pos, BlockState oldState) {
-        super.onBlockReplaced(pos, oldState);
-        if (this.getGrave() != null && this.world != null) {
-            this.getGrave().destroyGrave(world.getServer(), null);
+    public void preRemoveSideEffects(BlockPos pos, BlockState oldState) {
+        super.preRemoveSideEffects(pos, oldState);
+        if (this.getGrave() != null && this.level != null) {
+            this.getGrave().destroyGrave(level.getServer(), null);
         }
     }
 
     protected void updateForAllPlayers() {
-        assert this.world != null;
+        assert this.level != null;
     }
 
 
-    public static <T extends BlockEntity> void tick(World world, BlockPos pos, BlockState state, T t) {
-        if (!(t instanceof GraveBlockEntity self) || world.isClient()) {
+    public static <T extends BlockEntity> void tick(Level world, BlockPos pos, BlockState state, T t) {
+        if (!(t instanceof GraveBlockEntity self) || world.isClientSide()) {
             return;
         }
         self.cachedPlaceholders = null;
         if (self.data == null) {
-            if (world.getTime() % 10 == 0) {
+            if (world.getGameTime() % 10 == 0) {
                 self.fetchGraveData();
             } else if (self.selfDestructTimer++ > 10 * 20) {
                 GravesMod.LOGGER.warn("Failed to load grave at {}! Removing it!", pos.toShortString());
-                world.setBlockState(pos, self.replacedBlockState);
+                world.setBlockAndUpdate(pos, self.replacedBlockState);
             }
 
             return;
@@ -142,8 +141,8 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
             self.model.setGrave(self);
         }
 
-        if (world.getTime() % 5 != 0) {
-            self.model.maybeTick(world.getTime());
+        if (world.getGameTime() % 5 != 0) {
+            self.model.maybeTick(world.getGameTime());
             return;
         }
 
@@ -151,18 +150,18 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
 
 
         if (config.protection.breakingTime > -1 && self.data.shouldNaturallyBreak()) {
-            world.setBlockState(pos, self.replacedBlockState, Block.NOTIFY_ALL);
+            world.setBlock(pos, self.replacedBlockState, Block.UPDATE_ALL);
             return;
         }
 
-        if (state.get(IS_LOCKED) && !self.data.isProtected()) {
-            world.setBlockState(pos, state.with(IS_LOCKED, false));
+        if (state.getValue(IS_LOCKED) && !self.data.isProtected()) {
+            world.setBlockAndUpdate(pos, state.setValue(IS_LOCKED, false));
             if (self.model != null) {
                 self.model.updateModel();
             }
         }
 
-        self.model.maybeTick(world.getTime());
+        self.model.maybeTick(world.getGameTime());
     }
 
     @Override
@@ -177,16 +176,16 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
     }
 
     public void breakBlock(boolean canCreateVisual) {
-        assert world != null;
+        assert level != null;
         if (canCreateVisual && ConfigManager.getConfig().placement.createVisualGrave) {
-            world.setBlockState(pos,  GravesRegistry.VISUAL_GRAVE_BLOCK.getStateWithProperties(this.getCachedState()));
+            level.setBlockAndUpdate(worldPosition,  GravesRegistry.VISUAL_GRAVE_BLOCK.withPropertiesOf(this.getBlockState()));
 
-            if (world.getBlockEntity(pos) instanceof VisualGraveBlockEntity blockEntity) {
+            if (level.getBlockEntity(worldPosition) instanceof VisualGraveBlockEntity blockEntity) {
                 blockEntity.setVisualData(this.getClientData(), this.replacedBlockState);
                 blockEntity.setModelId(this.getGraveModelId());
             }
         } else {
-            world.setBlockState(pos, this.replacedBlockState);
+            level.setBlockAndUpdate(worldPosition, this.replacedBlockState);
         }
     }
 
@@ -212,7 +211,7 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
 
     @Override
     public boolean isGraveProtected() {
-        return this.getCachedState().get(IS_LOCKED);
+        return this.getBlockState().getValue(IS_LOCKED);
     }
 
     @Override
@@ -231,11 +230,11 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
     }
 
     @Override
-    public Text getGravePlaceholder(String id) {
+    public Component getGravePlaceholder(String id) {
         var x = this.cachedPlaceholders;
         if (x == null) {
-            assert this.world != null;
-            var server = this.world.getServer();
+            assert this.level != null;
+            var server = this.level.getServer();
             x = this.getGrave() != null && server != null ? this.data.getPlaceholders(server) : Map.of();
             this.cachedPlaceholders = x;
         }
@@ -244,7 +243,7 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
     }
 
     @Override
-    public ProfileComponent getGraveGameProfile() {
+    public ResolvableProfile getGraveGameProfile() {
         return this.getGrave() != null ? this.data.getProfileComponent() : Grave.DEFAULT_PROFILE_COMPONENT;
     }
 
@@ -269,8 +268,8 @@ public class GraveBlockEntity extends AbstractGraveBlockEntity implements GraveH
     }
 
     @Override
-    public Arm getGraveMainArm() {
-        return this.getGrave() != null ? this.data.mainArm() : Arm.RIGHT;
+    public HumanoidArm getGraveMainArm() {
+        return this.getGrave() != null ? this.data.mainArm() : HumanoidArm.RIGHT;
     }
 
     @Override

@@ -3,37 +3,37 @@ package eu.pb4.graves.compat;
 import de.rubixdev.inventorio.api.InventorioAPI;
 import eu.pb4.graves.GravesApi;
 import eu.pb4.graves.grave.GraveInventoryMask;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
 
 public record InventorioCompat() implements GraveInventoryMask {
     public static final GraveInventoryMask INSTANCE = new InventorioCompat();
 
     public static void register() {
-        GravesApi.registerInventoryMask(Identifier.of("universal_graves", "inventorio"), INSTANCE);
+        GravesApi.registerInventoryMask(Identifier.fromNamespaceAndPath("universal_graves", "inventorio"), INSTANCE);
     }
 
     @Override
-    public void addToGrave(ServerPlayerEntity player, ItemConsumer consumer) {
+    public void addToGrave(ServerPlayer player, ItemConsumer consumer) {
         var inv = InventorioAPI.getInventoryAddon(player);
 
-        for (int i = 0; i < inv.size(); i++) {
-            var stack = inv.getStack(i);
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            var stack = inv.getItem(i);
             if (GravesApi.canAddItem(player, stack)) {
-                consumer.addItem(inv.removeStack(i), i);
+                consumer.addItem(inv.removeItemNoUpdate(i), i);
             }
         }
     }
 
     @Override
-    public boolean moveToPlayerExactly(ServerPlayerEntity player, ItemStack stack, int slot, NbtElement _unused) {
+    public boolean moveToPlayerExactly(ServerPlayer player, ItemStack stack, int slot, Tag _unused) {
         var inventory = player.getInventory();
 
-        if (inventory.getStack(slot).isEmpty()) {
-            inventory.setStack(slot, stack);
+        if (inventory.getItem(slot).isEmpty()) {
+            inventory.setItem(slot, stack);
             return true;
         }
 
@@ -41,11 +41,11 @@ public record InventorioCompat() implements GraveInventoryMask {
     }
 
     @Override
-    public boolean moveToPlayerClosest(ServerPlayerEntity player, ItemStack stack, int intended, NbtElement _unused) {
+    public boolean moveToPlayerClosest(ServerPlayer player, ItemStack stack, int intended, Tag _unused) {
         var inventory = InventorioAPI.getInventoryAddon(player);
         if (!stack.isEmpty()) {
             try {
-                stack.setCount(inventory.addStack(stack).getCount());
+                stack.setCount(inventory.addItem(stack).getCount());
                 return true;
             } catch (Exception e) {
                 // Silence!

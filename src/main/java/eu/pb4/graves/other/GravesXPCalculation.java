@@ -1,7 +1,7 @@
 package eu.pb4.graves.other;
 
 import eu.pb4.graves.config.ConfigManager;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 public enum GravesXPCalculation {
     NONE("none", (p) -> 0),
@@ -18,7 +18,7 @@ public enum GravesXPCalculation {
             }
         }
 
-        points += p.experienceProgress * p.getNextLevelExperience();
+        points += p.experienceProgress * p.getXpNeededForNextLevel();
         return (int) (points * ConfigManager.getConfig().storage.xpPercentTypeValue / 100);
     }),
 
@@ -34,7 +34,7 @@ public enum GravesXPCalculation {
             }
         }
 
-        points += p.experienceProgress * p.getNextLevelExperience() * percent;
+        points += p.experienceProgress * p.getXpNeededForNextLevel() * percent;
         return points;
     });
 
@@ -67,7 +67,7 @@ public enum GravesXPCalculation {
 
     @FunctionalInterface
     public interface Player2XP {
-        int calc(ServerPlayerEntity player);
+        int calc(ServerPlayer player);
     }
 
 }

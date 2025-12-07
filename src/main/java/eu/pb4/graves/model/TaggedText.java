@@ -6,13 +6,12 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import eu.pb4.graves.config.data.WrappedText;
 import eu.pb4.placeholders.api.node.TextNode;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-
 import java.util.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
-public record TaggedText(List<Line> entry, Text direct) {
-    public static final TaggedText EMPTY = new TaggedText(List.of(), Text.empty());
+public record TaggedText(List<Line> entry, Component direct) {
+    public static final TaggedText EMPTY = new TaggedText(List.of(), Component.empty());
     private static final Codec<WrappedText> BASE_TEXT_NODE = Codec.STRING.xmap(WrappedText::of, WrappedText::input);
 
     private static final Codec<Line> LINE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -39,9 +38,9 @@ public record TaggedText(List<Line> entry, Text direct) {
     }
 
     private static TaggedText of(List<Line> list) {
-        var t = Text.empty();
+        var t = Component.empty();
         var iter = list.iterator();
-        var nl = Text.literal("\n");
+        var nl = Component.literal("\n");
         while (iter.hasNext()) {
             var l = iter.next();
             t.append(l.node.text());

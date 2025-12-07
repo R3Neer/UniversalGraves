@@ -12,8 +12,8 @@
     "MannequinEntityAccessor",
     "PlayerInventoryAccessor",
     "PlayerLikeEntityAccessor",
-    "ServerPlayerEntityMixin",
-    "ServerWorldMixin",
+    "ServerPlayerMixin",
+    "ServerLevelMixin",
     "datafixer.ItemStackComponentizationFixMixin",
     "datafixer.Schema1460Mixin"
   ],

@@ -21,11 +21,8 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.ItemGroups;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.CreativeModeTabs;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -49,8 +46,8 @@ public class GravesMod implements ModInitializer {
         GravesRegistry.register();
         Commands.register();
 
-        ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register((e) -> {
-            e.add(GravesRegistry.CONTAINER_GRAVE_ITEM);
+        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register((e) -> {
+            e.accept(GravesRegistry.CONTAINER_GRAVE_ITEM);
         });
 
         GraveTextures.initialize();
@@ -60,9 +57,9 @@ public class GravesMod implements ModInitializer {
             PolymerResourcePackUtils.addModAssets("universal-graves");
         }
 
-        CommonProtection.register(Identifier.of("universal_graves", "graves"), GraveProtectionProvider.INSTANCE);
+        CommonProtection.register(Identifier.fromNamespaceAndPath("universal_graves", "graves"), GraveProtectionProvider.INSTANCE);
 
-        GravesApi.registerInventoryMask(Identifier.of("vanilla"), VanillaInventoryMask.INSTANCE);
+        GravesApi.registerInventoryMask(Identifier.parse("vanilla"), VanillaInventoryMask.INSTANCE);
 
         if (loader.isModLoaded("goml")) {
             GomlCompat.register();
@@ -82,7 +79,7 @@ public class GravesMod implements ModInitializer {
             SaveGearOnDeathCompat.register();
         }
 
-        ServerLifecycleEvents.SERVER_STARTING.register((server) -> ConfigManager.loadConfig(server.getRegistryManager()));
+        ServerLifecycleEvents.SERVER_STARTING.register((server) -> ConfigManager.loadConfig(server.registryAccess()));
         ServerLifecycleEvents.SERVER_STOPPED.register((server) -> {
             GraveManager.INSTANCE = null;
             ConfigManager.clearConfig();
@@ -92,8 +89,8 @@ public class GravesMod implements ModInitializer {
         });
 
         ServerWorldEvents.LOAD.register(((server, world) -> {
-            if (world == server.getOverworld()) {
-                GraveManager.INSTANCE = world.getPersistentStateManager().getOrCreate(GraveManager.getType(world));
+            if (world == server.overworld()) {
+                GraveManager.INSTANCE = world.getDataStorage().computeIfAbsent(GraveManager.getType(world));
                 GraveManager.INSTANCE.setServer(server);
             }
         }));

@@ -10,19 +10,16 @@ import eu.pb4.graves.ui.AllGraveListGui;
 import eu.pb4.graves.ui.GraveListGui;
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.GameProfileArgumentType;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.GameProfileArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.minecraft.server.command.CommandManager.argument;
-import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
 
 public class Commands {
     public static void register() {
@@ -38,7 +35,7 @@ public class Commands {
 
                             .then(literal("player")
                                     .requires(Permissions.require("universal_graves.list_others", 3))
-                                    .then(argument("player", GameProfileArgumentType.gameProfile())
+                                    .then(argument("player", GameProfileArgument.gameProfile())
                                             .executes((ctx) -> Commands.listOthers(ctx, false))
                                             .then(literal("modify")
                                                     .requires(Permissions.require("universal_graves.list_others.modify", 3))
@@ -65,25 +62,25 @@ public class Commands {
         });
     }
 
-    private static int list(CommandContext<ServerCommandSource> context, boolean canModify) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayerOrThrow();
+    private static int list(CommandContext<CommandSourceStack> context, boolean canModify) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
         try {
-            new GraveListGui(player, player.getPlayerConfigEntry(), canModify, Permissions.check(context.getSource(), "universal_graves.fetch_grave", 3)).open();
+            new GraveListGui(player, player.nameAndId(), canModify, Permissions.check(context.getSource(), "universal_graves.fetch_grave", 3)).open();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return 0;
     }
 
-    private static int listOthers(CommandContext<ServerCommandSource> context, boolean canModify) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayer();
-        var profiles = new ArrayList<>(context.getArgument("player", GameProfileArgumentType.GameProfileArgument.class).getNames(context.getSource()));
+    private static int listOthers(CommandContext<CommandSourceStack> context, boolean canModify) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayer();
+        var profiles = new ArrayList<>(context.getArgument("player", GameProfileArgument.Result.class).getNames(context.getSource()));
 
         if (profiles.isEmpty()) {
-            context.getSource().sendFeedback(() -> Text.literal("This player doesn't exist!"), false);
+            context.getSource().sendSuccess(() -> Component.literal("This player doesn't exist!"), false);
             return 0;
         } else if (profiles.size() > 1) {
-            context.getSource().sendFeedback(() -> Text.literal("Only one player can be selected!"), false);
+            context.getSource().sendSuccess(() -> Component.literal("Only one player can be selected!"), false);
             return 0;
         }
         try {
@@ -95,8 +92,8 @@ public class Commands {
         return 0;
     }
 
-    private static int listAll(CommandContext<ServerCommandSource> context, boolean canModify) throws CommandSyntaxException {
-        ServerPlayerEntity player = context.getSource().getPlayer();
+    private static int listAll(CommandContext<CommandSourceStack> context, boolean canModify) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayer();
         try {
             new AllGraveListGui(player, canModify, canModify && Permissions.check(context.getSource(), "universal_graves.fetch_grave.others", 3)).open();
         } catch (Exception e) {
@@ -106,18 +103,18 @@ public class Commands {
         return 0;
     }
 
-    private static int reloadConfig(CommandContext<ServerCommandSource> context) {
-        if (ConfigManager.loadConfig(context.getSource().getRegistryManager())) {
-            context.getSource().sendFeedback(() -> Text.literal("Reloaded config!"), false);
+    private static int reloadConfig(CommandContext<CommandSourceStack> context) {
+        if (ConfigManager.loadConfig(context.getSource().registryAccess())) {
+            context.getSource().sendSuccess(() -> Component.literal("Reloaded config!"), false);
         } else {
-            context.getSource().sendError(Text.literal("Error occurred while reloading config!").formatted(Formatting.RED));
+            context.getSource().sendFailure(Component.literal("Error occurred while reloading config!").withStyle(ChatFormatting.RED));
         }
         return 1;
     }
 
-    private static int about(CommandContext<ServerCommandSource> context) {
-        for (var text : context.getSource().getEntity() instanceof ServerPlayerEntity ? GenericModInfo.getAboutFull() : GenericModInfo.getAboutConsole()) {
-            context.getSource().sendFeedback(() -> text, false);
+    private static int about(CommandContext<CommandSourceStack> context) {
+        for (var text : context.getSource().getEntity() instanceof ServerPlayer ? GenericModInfo.getAboutFull() : GenericModInfo.getAboutConsole()) {
+            context.getSource().sendSuccess(() -> text, false);
         }
 
         return 1;

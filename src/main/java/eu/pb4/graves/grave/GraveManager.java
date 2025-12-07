@@ -7,24 +7,24 @@ import eu.pb4.graves.registry.GraveGameRules;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.SharedConstants;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.registry.RegistryWrapper;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.dynamic.Codecs;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.PersistentState;
-import net.minecraft.world.PersistentStateType;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ExtraCodecs;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 
-public final class GraveManager extends PersistentState {
+public final class GraveManager extends SavedData {
     public static GraveManager INSTANCE;
     private final HashMap<UUID, Set<Grave>> byUuid = new HashMap<>();
     private final HashMap<Location, Grave> byLocation = new HashMap<>();
@@ -37,12 +37,12 @@ public final class GraveManager extends PersistentState {
     private int breakingTime;
 
 
-    public static PersistentStateType<GraveManager> getType(ServerWorld world) {
-        return new PersistentStateType<>("universal-graves", GraveManager::new,
-                Codecs.fromOps(NbtOps.INSTANCE)
+    public static SavedDataType<GraveManager> getType(ServerLevel world) {
+        return new SavedDataType<>("universal-graves", GraveManager::new,
+                ExtraCodecs.converter(NbtOps.INSTANCE)
                         .xmap(
-                                nbt -> fromNbt((NbtCompound) nbt, world.getRegistryManager(), world.getServer().getDataFixer()),
-                                manager -> manager.writeNbt(new NbtCompound(), world.getRegistryManager())),
+                                nbt -> fromNbt((CompoundTag) nbt, world.registryAccess(), world.getServer().getFixerUpper()),
+                                manager -> manager.writeNbt(new CompoundTag(), world.registryAccess())),
                 null);
     }
 
@@ -55,7 +55,7 @@ public final class GraveManager extends PersistentState {
         this.byLocation.put(grave.getLocation(), grave);
         this.byId.put(grave.getId(), grave);
         this.graves.add(grave);
-        this.markDirty();
+        this.setDirty();
     }
 
     public void remove(Grave info) {
@@ -69,38 +69,38 @@ public final class GraveManager extends PersistentState {
                     this.byUuid.remove(info.getProfile().id());
                 }
             }
-            this.markDirty();
+            this.setDirty();
         }
     }
 
-    public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup) {
-        NbtList list = new NbtList();
+    public CompoundTag writeNbt(CompoundTag nbt, HolderLookup.Provider lookup) {
+        ListTag list = new ListTag();
 
         for (Grave grave : new ArrayList<>(this.graves)) {
             if (!grave.shouldNaturallyBreak()) {
-                list.add(grave.writeNbt(new NbtCompound(), lookup));
+                list.add(grave.writeNbt(new CompoundTag(), lookup));
             }
         }
         nbt.put("Graves", list);
         nbt.putInt("Version", 3);
-        nbt.putInt("GameVersion", SharedConstants.getGameVersion().dataVersion().id());
+        nbt.putInt("GameVersion", SharedConstants.getCurrentVersion().dataVersion().version());
         nbt.putLong("CurrentGameTime", this.currentGameTime);
         nbt.putLong("CurrentGrave", this.currentGraveId);
 
         return nbt;
     }
 
-    public static GraveManager fromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup lookup, DataFixer dataFixer) {
+    public static GraveManager fromNbt(CompoundTag nbt, HolderLookup.Provider lookup, DataFixer dataFixer) {
         GraveManager manager = new GraveManager();
         GraveManager.INSTANCE = manager;
-        int dataVersion = nbt.getInt("GameVersion", 3700);
+        int dataVersion = nbt.getIntOr("GameVersion", 3700);
 
-        manager.currentGameTime = nbt.getLong("CurrentGameTime", 0);
-        manager.currentGraveId = nbt.getLong("CurrentGrave", 0);
+        manager.currentGameTime = nbt.getLongOr("CurrentGameTime", 0);
+        manager.currentGraveId = nbt.getLongOr("CurrentGrave", 0);
 
         for (var graveNbt : nbt.getListOrEmpty("Graves")) {
             Grave graveInfo = new Grave();
-            graveInfo.readNbt((NbtCompound) graveNbt, lookup, dataFixer, dataVersion, SharedConstants.getGameVersion().dataVersion().id());
+            graveInfo.readNbt((CompoundTag) graveNbt, lookup, dataFixer, dataVersion, SharedConstants.getCurrentVersion().dataVersion().version());
             manager.add(graveInfo);
         }
         return manager;
@@ -131,11 +131,11 @@ public final class GraveManager extends PersistentState {
     }
 
     public Grave getByLocation(Identifier world, BlockPos pos) {
-        return this.getByLocation(new Location(world, pos.toImmutable()));
+        return this.getByLocation(new Location(world, pos.immutable()));
     }
 
-    public Grave getByLocation(World world, BlockPos pos) {
-        return this.getByLocation(new Location(world.getRegistryKey().getValue(), pos.toImmutable()));
+    public Grave getByLocation(Level world, BlockPos pos) {
+        return this.getByLocation(new Location(world.dimension().identifier(), pos.immutable()));
     }
 
     public Collection<Grave> getAll() {
@@ -181,8 +181,8 @@ public final class GraveManager extends PersistentState {
         return this.breakingTime;
     }
 
-    public Collection<Grave> getByPlayer(ServerPlayerEntity player) {
-        return this.getByUuid(player.getUuid());
+    public Collection<Grave> getByPlayer(ServerPlayer player) {
+        return this.getByUuid(player.getUUID());
     }
 
     public void setServer(MinecraftServer server) {

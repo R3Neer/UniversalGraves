@@ -2,8 +2,8 @@ package eu.pb4.graves.model.parts;
 
 import com.google.gson.annotations.SerializedName;
 import eu.pb4.polymer.virtualentity.api.elements.ItemDisplayElement;
-import net.minecraft.item.ItemDisplayContext;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 public class ItemDisplayModelPart extends DisplayModelPart<ItemDisplayElement, ItemDisplayModelPart> {
     @SerializedName("display_item")

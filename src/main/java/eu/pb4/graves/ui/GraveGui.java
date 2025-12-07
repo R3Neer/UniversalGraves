@@ -11,15 +11,14 @@ import eu.pb4.sgui.api.ClickType;
 import eu.pb4.sgui.api.GuiHelpers;
 import eu.pb4.sgui.api.gui.GuiInterface;
 import me.lucko.fabric.api.permissions.v0.Permissions;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.Items;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Items;
 
 public class GraveGui extends PagedGui {
     private final Grave grave;
-    private final Inventory inventory;
+    private final Container inventory;
     private boolean canTake;
     private final boolean canFetch;
     private final GuiInterface previousUi;
@@ -31,7 +30,7 @@ public class GraveGui extends PagedGui {
     private int actionTimeFetch = -1;
     private int currentGraveSize;
 
-    public GraveGui(ServerPlayerEntity player, Grave grave, boolean canModify, boolean canFetch) {
+    public GraveGui(ServerPlayer player, Grave grave, boolean canModify, boolean canFetch) {
         super(player);
         this.grave = grave;
         this.canModify = canModify;
@@ -39,15 +38,15 @@ public class GraveGui extends PagedGui {
         this.hasAccess = grave.hasAccess(player);
         this.canTake = grave.canTakeFrom(player);
         this.canFetch = canFetch;
-        this.setTitle(ConfigManager.getConfig().ui.graveTitle.with(grave.getPlaceholders(player.getEntityWorld().getServer())));
+        this.setTitle(ConfigManager.getConfig().ui.graveTitle.with(grave.getPlaceholders(player.level().getServer())));
         this.inventory = this.grave.asInventory();
-        this.currentGraveSize = this.inventory.size();
+        this.currentGraveSize = this.inventory.getContainerSize();
         this.previousUi = GuiHelpers.getCurrentGui(player);
         this.updateDisplay();
     }
 
     @Override
-    public boolean onAnyClick(int index, ClickType type, SlotActionType action) {
+    public boolean onAnyClick(int index, ClickType type, net.minecraft.world.inventory.ClickType action) {
         return super.onAnyClick(index, type, action);
     }
 
@@ -66,12 +65,12 @@ public class GraveGui extends PagedGui {
             this.actionTimeRemoveProtect = -1;
         }
 
-        if (this.currentGraveSize != this.inventory.size()) {
-            this.currentGraveSize = this.inventory.size();
+        if (this.currentGraveSize != this.inventory.getContainerSize()) {
+            this.currentGraveSize = this.inventory.getContainerSize();
             this.updateDisplay();
         } else if (this.ticker % 20 == 0) {
             if (this.canTake) {
-                this.grave.tryBreak(this.player.getEntityWorld().getServer(), this.player);
+                this.grave.tryBreak(this.player.level().getServer(), this.player);
             }
             this.updateDisplay();
         }
@@ -81,7 +80,7 @@ public class GraveGui extends PagedGui {
     @Override
     public void onClose() {
         this.grave.updateDisplay();
-        this.grave.updateSelf(this.player.getEntityWorld().getServer());
+        this.grave.updateSelf(this.player.level().getServer());
         super.onClose();
     }
 
@@ -92,7 +91,7 @@ public class GraveGui extends PagedGui {
 
     @Override
     protected GuiSlot getElement(int id) {
-        if (id < this.inventory.size()) {
+        if (id < this.inventory.getContainerSize()) {
             return GuiSlot.of(new OutputSlot(inventory, id, 0, 0, this.canModify && this.canTake));
         }
         return GuiSlot.empty();
@@ -104,16 +103,16 @@ public class GraveGui extends PagedGui {
 
         return switch (id) {
             case 0 -> {
-                var placeholders = grave.getPlaceholders(this.player.getEntityWorld().getServer());
+                var placeholders = grave.getPlaceholders(this.player.level().getServer());
 
                 yield GuiSlot.of(ConfigManager.getConfig().ui.graveInfoIcon.get(this.grave.isProtected())
                         .builder(placeholders)
                         .setCallback((x, y, z) -> {
-                            var cursor = this.player.currentScreenHandler.getCursorStack();
-                            if (!cursor.isEmpty() && cursor.isOf(Items.COMPASS)) {
-                                cursor.decrement(1);
+                            var cursor = this.player.containerMenu.getCarried();
+                            if (!cursor.isEmpty() && cursor.is(Items.COMPASS)) {
+                                cursor.shrink(1);
 
-                                player.getInventory().offerOrDrop(GraveCompassItem.create(this.grave.getId(), true));
+                                player.getInventory().placeItemBackInInventory(GraveCompassItem.create(this.grave.getId(), true));
                             }
                         })
                 );
@@ -141,7 +140,7 @@ public class GraveGui extends PagedGui {
                                         }
                                     });
                                 } else {
-                                    playClickSound(this.player, SoundEvents.ENTITY_VILLAGER_NO);
+                                    playClickSound(this.player, SoundEvents.VILLAGER_NO);
                                 }
                             })
                     );
@@ -154,7 +153,7 @@ public class GraveGui extends PagedGui {
                             .setCallback((x, y, z) -> {
                                 playClickSound(player);
                                 this.actionTimeFetch = -1;
-                                if (!this.grave.moveTo(player.getEntityWorld().getServer(), Location.fromEntity(player))) {
+                                if (!this.grave.moveTo(player.level().getServer(), Location.fromEntity(player))) {
                                     //player.sendMessage(config.texts);
                                     return;
                                 }
@@ -177,7 +176,7 @@ public class GraveGui extends PagedGui {
 
     private GuiSlot getUnlockGrave() {
         var config = ConfigManager.getConfig();
-        if (this.grave.isPaymentRequired() && (config.interactions.allowRemoteGraveUnlocking || Permissions.check(player.getCommandSource(), "graves.can_unlock_remotely", 3))) {
+        if (this.grave.isPaymentRequired() && (config.interactions.allowRemoteGraveUnlocking || Permissions.check(player.createCommandSourceStack(), "graves.can_unlock_remotely", 3))) {
             return GuiSlot.of(ConfigManager.getConfig().ui.unlockButton.get(config.interactions.cost.checkCost(player))
                     .builder(ConfigManager.getConfig().interactions.cost.getPlaceholders())
                     .setCallback((x, y, z) -> {
@@ -186,7 +185,7 @@ public class GraveGui extends PagedGui {
                             playClickSound(this.player);
                             this.updateDisplay();
                         } else {
-                            playClickSound(this.player, SoundEvents.ENTITY_VILLAGER_NO);
+                            playClickSound(this.player, SoundEvents.VILLAGER_NO);
                         }
                     }));
         }
@@ -196,7 +195,7 @@ public class GraveGui extends PagedGui {
 
     private GuiSlot getRemoveProtection() {
         var config = ConfigManager.getConfig();
-        if (this.grave.isProtected() && (this.hasAccess && (config.interactions.allowRemoteProtectionRemoval || Permissions.check(player.getCommandSource(), "graves.can_remove_protection_remotely", 3)))) {
+        if (this.grave.isProtected() && (this.hasAccess && (config.interactions.allowRemoteProtectionRemoval || Permissions.check(player.createCommandSourceStack(), "graves.can_remove_protection_remotely", 3)))) {
             if (this.actionTimeRemoveProtect != -1) {
                 return GuiSlot.of(config.ui.removeProtectionButton.get(false).builder()
                         .setCallback((x, y, z) -> {
@@ -217,12 +216,12 @@ public class GraveGui extends PagedGui {
             }
         }
 
-        if (this.canModify || (this.canTake && (config.interactions.allowRemoteGraveBreaking || Permissions.check(player.getCommandSource(), "graves.can_break_remotely", 3)))) {
+        if (this.canModify || (this.canTake && (config.interactions.allowRemoteGraveBreaking || Permissions.check(player.createCommandSourceStack(), "graves.can_break_remotely", 3)))) {
             if (this.actionTimeRemoveProtect != -1) {
                 return GuiSlot.of(config.ui.breakGraveButton.get(false).builder()
                         .setCallback((x, y, z) -> {
                             playClickSound(player);
-                            this.grave.destroyGrave(this.player.getEntityWorld().getServer(), this.player);
+                            this.grave.destroyGrave(this.player.level().getServer(), this.player);
                             this.actionTimeRemoveProtect = -1;
                             this.close();
                         })

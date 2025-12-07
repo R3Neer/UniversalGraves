@@ -4,10 +4,9 @@ import eu.pb4.graves.GraveTextures;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.grave.Grave;
 import eu.pb4.graves.grave.GraveManager;
-import net.minecraft.server.network.ServerPlayerEntity;
-
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.server.level.ServerPlayer;
 
 public class AllGraveListGui extends PagedGui {
     private final boolean canModify;
@@ -15,7 +14,7 @@ public class AllGraveListGui extends PagedGui {
     private List<Grave> graves;
     private boolean canFetch;
 
-    public AllGraveListGui(ServerPlayerEntity player, boolean canModify, boolean canFetch) {
+    public AllGraveListGui(ServerPlayer player, boolean canModify, boolean canFetch) {
         super(player);
 
         this.setTitle(ConfigManager.getConfig().ui.adminGraveListTitle.text());
@@ -37,7 +36,7 @@ public class AllGraveListGui extends PagedGui {
 
             var grave = this.graves.get(id);
 
-            var placeholders = grave.getPlaceholders(this.player.getEntityWorld().getServer());
+            var placeholders = grave.getPlaceholders(this.player.level().getServer());
 
             var element = config.ui.listAllGraveIcon.get(grave.isProtected())
                     .builder(placeholders)

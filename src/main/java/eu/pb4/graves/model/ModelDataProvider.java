@@ -1,11 +1,11 @@
 package eu.pb4.graves.model;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ResolvableProfile;
 
 public interface ModelDataProvider {
     String getGraveModelId();
@@ -13,10 +13,10 @@ public interface ModelDataProvider {
     boolean isGraveBroken();
     boolean isGravePlayerMade();
     boolean isGravePaymentRequired();
-    Text getGravePlaceholder(String id);
-    ProfileComponent getGraveGameProfile();
+    Component getGravePlaceholder(String id);
+    ResolvableProfile getGraveGameProfile();
     ItemStack getGraveSlotItem(int i);
     ItemStack getGraveTaggedItem(Identifier identifier);
-    Arm getGraveMainArm();
+    HumanoidArm getGraveMainArm();
     byte getGraveSkinModelLayers();
 }

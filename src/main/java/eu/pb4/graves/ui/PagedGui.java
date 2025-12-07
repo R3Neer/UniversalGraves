@@ -3,23 +3,23 @@ package eu.pb4.graves.ui;
 import eu.pb4.graves.GraveTextures;
 import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.sgui.api.gui.SimpleGui;
-import net.minecraft.screen.ScreenHandlerType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.inventory.MenuType;
 
 public abstract class PagedGui extends SimpleGui {
     public static final int PAGE_SIZE = 9 * 4;
     protected int page = 0;
 
-    public PagedGui(ServerPlayerEntity player) {
-        super(ScreenHandlerType.GENERIC_9X5, player, false);
+    public PagedGui(ServerPlayer player) {
+        super(MenuType.GENERIC_9x5, player, false);
     }
 
     @Override
-    public void setTitle(Text title) {
+    public void setTitle(Component title) {
         super.setTitle(GraveTextures.get(this.getPlayer(), title));
     }
 
@@ -83,11 +83,11 @@ public abstract class PagedGui extends SimpleGui {
 
     protected abstract GuiSlot getNavElement(int id);
 
-    public static final void playClickSound(ServerPlayerEntity player) {
-        GraveUtils.playSoundToPlayer(player, SoundEvents.UI_BUTTON_CLICK.value(), SoundCategory.UI, 1, 1);
+    public static final void playClickSound(ServerPlayer player) {
+        GraveUtils.playSoundToPlayer(player, SoundEvents.UI_BUTTON_CLICK.value(), SoundSource.UI, 1, 1);
     }
 
-    public static final void playClickSound(ServerPlayerEntity player, SoundEvent soundEvent) {
-        GraveUtils.playSoundToPlayer(player, soundEvent, SoundCategory.UI, 1, 1);
+    public static final void playClickSound(ServerPlayer player, SoundEvent soundEvent) {
+        GraveUtils.playSoundToPlayer(player, soundEvent, SoundSource.UI, 1, 1);
     }
 }

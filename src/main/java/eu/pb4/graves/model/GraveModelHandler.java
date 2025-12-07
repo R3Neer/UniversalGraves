@@ -16,44 +16,42 @@ import eu.pb4.polymer.virtualentity.api.ElementHolder;
 import eu.pb4.polymer.virtualentity.api.attachment.BlockBoundAttachment;
 import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;
 import eu.pb4.polymer.virtualentity.api.elements.*;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.MannequinEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationPropertyHelper;
-
 import java.util.*;
 import java.util.function.Function;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.decoration.Mannequin;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.RotationSegment;
 
 public class GraveModelHandler extends ElementHolder {
     private final List<TextsWithPlaceholders> textsWithPlaceholders = new ArrayList<>();
     //private final List<ItemDisplayElement> playerHeadDisplays = new ArrayList<>();
-    private final List<Pair<ItemDisplayElement, ItemDisplayModelPart>> itemDisplays = new ArrayList<>();
-    private final ServerWorld world;
+    private final List<Tuple<ItemDisplayElement, ItemDisplayModelPart>> itemDisplays = new ArrayList<>();
+    private final ServerLevel world;
     private BlockState blockState;
     private float yaw;
     private Set<Identifier> ignoredFlags;
-    private final List<Pair<VirtualElement, ModelPart<?, ?>>> rotatingElements = new ArrayList<>();
+    private final List<Tuple<VirtualElement, ModelPart<?, ?>>> rotatingElements = new ArrayList<>();
     private ModelDataProvider dataPrivider;
-    private final List<Pair<LivingEntity, Set<Identifier>>> entityWithEquipment = new ArrayList<>();
+    private final List<Tuple<LivingEntity, Set<Identifier>>> entityWithEquipment = new ArrayList<>();
     private int tickTime = 20;
 
-    public GraveModelHandler(BlockState state, ServerWorld world) {
+    public GraveModelHandler(BlockState state, ServerLevel world) {
         this.blockState = state;
         this.world = world;
         this.updateYaw();
     }
 
     private void updateYaw() {
-        this.setYaw(RotationPropertyHelper.toDegrees(blockState.get(AbstractGraveBlock.ROTATION)));
+        this.setYaw(RotationSegment.convertToDegrees(blockState.getValue(AbstractGraveBlock.ROTATION)));
     }
 
     public void setGrave(ModelDataProvider modelDataProvider) {
@@ -82,7 +80,7 @@ public class GraveModelHandler extends ElementHolder {
             flags.add(isProtected ? ModelTags.IF_UNPROTECTED : ModelTags.IF_PROTECTED);
             flags.add(this.dataPrivider.isGravePlayerMade() ? ModelTags.IF_NOT_PLAYER_MADE : ModelTags.IF_PLAYER_MADE);
             flags.add(this.dataPrivider.isGravePaymentRequired() ? ModelTags.IF_NOT_REQUIRE_PAYMENT : ModelTags.IF_REQUIRE_PAYMENT);
-            flags.add(this.blockState.isOf(GravesRegistry.GRAVE_BLOCK) ? ModelTags.IF_VISUAL : ModelTags.IF_NOT_VISUAL);
+            flags.add(this.blockState.is(GravesRegistry.GRAVE_BLOCK) ? ModelTags.IF_VISUAL : ModelTags.IF_NOT_VISUAL);
 
 
             if (!isProtected || GraveManager.INSTANCE.getProtectionTime() <= 0) {
@@ -141,7 +139,7 @@ public class GraveModelHandler extends ElementHolder {
             boolean canContinue = true;
             if (part.tags.contains(ModelTags.PLAYER_HEAD)) {
                 //this.playerHeadDisplays.add(itemDisplayElement);
-                itemDisplayElement.getItem().set(DataComponentTypes.PROFILE, this.dataPrivider.getGraveGameProfile());
+                itemDisplayElement.getItem().set(DataComponents.PROFILE, this.dataPrivider.getGraveGameProfile());
                 canContinue = false;
             } else {
                 for (var tag : ModelTags.EQUIPMENT) {
@@ -149,7 +147,7 @@ public class GraveModelHandler extends ElementHolder {
                         var stack = this.dataPrivider.getGraveTaggedItem(tag);
                         if (!stack.isEmpty()) {
                             itemDisplayElement.setItem(stack);
-                            this.itemDisplays.add(new Pair<>(itemDisplayElement, itemDisplayModelPart));
+                            this.itemDisplays.add(new Tuple<>(itemDisplayElement, itemDisplayModelPart));
                             canContinue = false;
                             break;
                         }
@@ -160,34 +158,34 @@ public class GraveModelHandler extends ElementHolder {
             if (canContinue && part.tags.contains(ModelTags.ITEM)) {
                 var i = this.itemDisplays.size();
                 itemDisplayElement.setItem(this.dataPrivider.getGraveSlotItem(i));
-                this.itemDisplays.add(new Pair<>(itemDisplayElement, itemDisplayModelPart));
+                this.itemDisplays.add(new Tuple<>(itemDisplayElement, itemDisplayModelPart));
             }
         }
 
         if (element instanceof EntityElement<?> entityElement && entityElement.entity() instanceof LivingEntity livingEntity) {
             boolean hasTag = false;
             for (var tag : ModelTags.EQUIPMENT_WITH_SLOT) {
-                if (part.tags.contains(tag.getLeft())) {
+                if (part.tags.contains(tag.getA())) {
                     hasTag = true;
-                    var stack = this.dataPrivider.getGraveTaggedItem(tag.getLeft());
-                    livingEntity.equipStack(tag.getRight(), stack);
+                    var stack = this.dataPrivider.getGraveTaggedItem(tag.getA());
+                    livingEntity.setItemSlot(tag.getB(), stack);
                 }
             }
             if (hasTag) {
-                this.entityWithEquipment.add(new Pair<>(livingEntity, part.tags));
+                this.entityWithEquipment.add(new Tuple<>(livingEntity, part.tags));
             }
         }
 
         if (this.updateYawFor(element, part)) {
-            this.rotatingElements.add(new Pair<>(element, part));
+            this.rotatingElements.add(new Tuple<>(element, part));
         }
 
-        if (part instanceof EntityModelPart playerModelPart && element instanceof EntityElement<?> playerElement && playerElement.entity() instanceof MannequinEntity mannequin) {
+        if (part instanceof EntityModelPart playerModelPart && element instanceof EntityElement<?> playerElement && playerElement.entity() instanceof Mannequin mannequin) {
             if (playerModelPart.tags.contains(ModelTags.PLAYER_HEAD)) {
                 var m = (MannequinEntityAccessor) mannequin;
-                m.callSetMannequinProfile(this.dataPrivider.getGraveGameProfile());
+                m.callSetProfile(this.dataPrivider.getGraveGameProfile());
                 mannequin.setMainArm(this.dataPrivider.getGraveMainArm());
-                playerElement.entity().getDataTracker().set(PlayerLikeEntityAccessor.getPLAYER_MODE_CUSTOMIZATION_ID(), this.dataPrivider.getGraveSkinModelLayers());
+                playerElement.entity().getEntityData().set(PlayerLikeEntityAccessor.getDATA_PLAYER_MODE_CUSTOMISATION(), this.dataPrivider.getGraveSkinModelLayers());
             }
         }
 
@@ -196,7 +194,7 @@ public class GraveModelHandler extends ElementHolder {
 
     private boolean updateYawFor(VirtualElement element, ModelPart part) {
         if (part.tags.contains(ModelTags.ROUND_YAW_TO_90)) {
-            yaw = Direction.fromHorizontalDegrees(yaw).getPositiveHorizontalDegrees();
+            yaw = Direction.fromYRot(yaw).toYRot();
         }
         boolean ret = false;
 
@@ -205,15 +203,15 @@ public class GraveModelHandler extends ElementHolder {
                 x.setYaw(this.yaw);
                 ret = true;
             } else if (element instanceof EntityElement<?> x) {
-                x.entity().setYaw(this.yaw);
-                x.entity().setBodyYaw(this.yaw);
-                x.entity().setHeadYaw(this.yaw);
+                x.entity().setYRot(this.yaw);
+                x.entity().setYBodyRot(this.yaw);
+                x.entity().setYHeadRot(this.yaw);
                 ret = true;
             }
         }
 
         if (part.rotatePos) {
-            element.setOffset(part.position.rotateY(this.yaw * MathHelper.RADIANS_PER_DEGREE));
+            element.setOffset(part.position.yRot(this.yaw * Mth.DEG_TO_RAD));
             ret = true;
         }
         return ret;
@@ -222,15 +220,15 @@ public class GraveModelHandler extends ElementHolder {
     public void setYaw(float value) {
         this.yaw = value;
         for (var element : this.rotatingElements) {
-            updateYawFor(element.getLeft(), element.getRight());
+            updateYawFor(element.getA(), element.getB());
         }
     }
 
     @Override
     protected void onTick() {
         if (this.dataPrivider != null) {
-            if (this.world.getTime() % 20 == 0) {
-                var placeholders = (Function<String, Text>) this.dataPrivider::getGravePlaceholder;
+            if (this.world.getGameTime() % 20 == 0) {
+                var placeholders = (Function<String, Component>) this.dataPrivider::getGravePlaceholder;
                 for (var text : textsWithPlaceholders) {
                     text.displayElement.setText(text.node().toText(ParserContext.of(WrappedText.DYNAMIC_NODES, placeholders)));
                 }
@@ -239,28 +237,28 @@ public class GraveModelHandler extends ElementHolder {
                     boolean canContinue = true;
                     var pair = this.itemDisplays.get(i);
                     for (var tag : ModelTags.EQUIPMENT) {
-                        if (pair.getRight().tags.contains(tag)) {
+                        if (pair.getB().tags.contains(tag)) {
                             var stack = this.dataPrivider.getGraveTaggedItem(tag);
                             if (!stack.isEmpty()) {
-                                pair.getLeft().setItem(stack);
+                                pair.getA().setItem(stack);
                                 canContinue = false;
                                 break;
                             }
                         }
                     }
-                    if (canContinue && pair.getRight().tags.contains(ModelTags.ITEM)) {
-                        pair.getLeft().setItem(this.dataPrivider.getGraveSlotItem(i));
+                    if (canContinue && pair.getB().tags.contains(ModelTags.ITEM)) {
+                        pair.getA().setItem(this.dataPrivider.getGraveSlotItem(i));
                         continue;
                     }
 
-                    pair.getLeft().setItem(ItemStack.EMPTY);
+                    pair.getA().setItem(ItemStack.EMPTY);
                 }
 
                 for (var pair : this.entityWithEquipment) {
                     for (var tag : ModelTags.EQUIPMENT_WITH_SLOT) {
-                        if (pair.getRight().contains(tag.getLeft())) {
-                            var stack = this.dataPrivider.getGraveTaggedItem(tag.getLeft());
-                            pair.getLeft().equipStack(tag.getRight(), stack);
+                        if (pair.getB().contains(tag.getA())) {
+                            var stack = this.dataPrivider.getGraveTaggedItem(tag.getA());
+                            pair.getA().setItemSlot(tag.getB(), stack);
                         }
                     }
                 }

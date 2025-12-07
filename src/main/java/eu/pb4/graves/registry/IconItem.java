@@ -4,27 +4,25 @@ import com.mojang.serialization.Codec;
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.core.api.item.PolymerItemUtils;
 import eu.pb4.polymer.core.api.utils.PolymerUtils;
-import net.minecraft.component.ComponentType;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.packettweaker.PacketContext;
 
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+import net.minecraft.core.component.DataComponentType;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
 
 public final class IconItem extends Item implements PolymerItem {
-    public static final ComponentType<Texture> TEXTURE = ComponentType.<Texture>builder()
-            .codec(Codec.stringResolver(Texture::id, x -> Texture.BY_NAME.getOrDefault(x, Texture.INVALID))).build();
+    public static final DataComponentType<Texture> TEXTURE = DataComponentType.<Texture>builder()
+            .persistent(Codec.stringResolver(Texture::id, x -> Texture.BY_NAME.getOrDefault(x, Texture.INVALID))).build();
 
-    public IconItem(Settings settings) {
+    public IconItem(Properties settings) {
         super(settings);
     }
 
@@ -40,10 +38,10 @@ public final class IconItem extends Item implements PolymerItem {
     }
 
     @Override
-    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipType tooltipType, PacketContext context) {
+    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipFlag tooltipType, PacketContext context) {
         var stack = PolymerItemUtils.createItemStack(itemStack, tooltipType, context);
         var texture = itemStack.getOrDefault(TEXTURE, Texture.INVALID);
-        stack.set(DataComponentTypes.PROFILE, PolymerUtils.createProfileComponent(texture.texture, null));
+        stack.set(DataComponents.PROFILE, PolymerUtils.createProfileComponent(texture.texture, null));
         return stack;
     }
 

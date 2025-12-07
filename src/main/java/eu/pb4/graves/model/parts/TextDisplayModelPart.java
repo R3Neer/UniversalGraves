@@ -3,7 +3,7 @@ package eu.pb4.graves.model.parts;
 import com.google.gson.annotations.SerializedName;
 import eu.pb4.graves.model.TaggedText;
 import eu.pb4.polymer.virtualentity.api.elements.TextDisplayElement;
-import net.minecraft.entity.decoration.DisplayEntity;
+import net.minecraft.world.entity.Display;
 
 public class TextDisplayModelPart extends DisplayModelPart<TextDisplayElement, TextDisplayModelPart> {
     @SerializedName("text")
@@ -21,7 +21,7 @@ public class TextDisplayModelPart extends DisplayModelPart<TextDisplayElement, T
     @SerializedName("text_default_background")
     public boolean textDefaultBackground = true;
     @SerializedName("text_alignment")
-    public DisplayEntity.TextDisplayEntity.TextAlignment textAlignment = DisplayEntity.TextDisplayEntity.TextAlignment.CENTER;
+    public Display.TextDisplay.Align textAlignment = Display.TextDisplay.Align.CENTER;
 
 
     @Override

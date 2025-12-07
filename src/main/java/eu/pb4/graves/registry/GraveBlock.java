@@ -4,49 +4,47 @@ import eu.pb4.graves.GravesMod;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.grave.Grave;
 import eu.pb4.graves.other.VisualGraveData;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class GraveBlock extends AbstractGraveBlock implements BlockEntityProvider {
-    public GraveBlock(Block.Settings settings) {
-        super(settings.dropsNothing().nonOpaque().dynamicBounds().strength(2, 999));
-        this.setDefaultState(this.getStateManager().getDefaultState().with(Properties.WATERLOGGED, false));
+public class GraveBlock extends AbstractGraveBlock implements EntityBlock {
+    public GraveBlock(BlockBehaviour.Properties settings) {
+        super(settings.noLootTable().noOcclusion().dynamicShape().strength(2, 999));
+        this.registerDefaultState(this.getStateDefinition().any().setValue(BlockStateProperties.WATERLOGGED, false));
     }
 
     @Override
-    public float calcBlockBreakingDelta(BlockState state, PlayerEntity player, BlockView world, BlockPos pos) {
+    public float getDestroyProgress(BlockState state, Player player, BlockGetter world, BlockPos pos) {
         if (world.getBlockEntity(pos) instanceof GraveBlockEntity be
                 && (be.getGrave() == null || be.getGrave().canTakeFrom(player))) {
-            return super.calcBlockBreakingDelta(state, player, world, pos);
+            return super.getDestroyProgress(state, player, world, pos);
         }
 
         return -1;
     }
 
     @Override
-    public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity playerTemp) {
-        if (!(playerTemp instanceof ServerPlayerEntity player)) {
+    public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player playerTemp) {
+        if (!(playerTemp instanceof ServerPlayer player)) {
             return state;
         }
         BlockEntity blockEntity = world.getBlockEntity(pos);
@@ -57,7 +55,7 @@ public class GraveBlock extends AbstractGraveBlock implements BlockEntityProvide
                 if (ConfigManager.getConfig().interactions.breakingTakesItems && grave.isOwner(player)) {
                     grave.quickEquip(player);
                 }
-                grave.destroyGrave(player.getEntityWorld().getServer(), player);
+                grave.destroyGrave(player.level().getServer(), player);
                 if (ConfigManager.getConfig().placement.restoreBlockAfterPlayerBreaking) {
                     graveBlockEntity.breakBlock();
                 }
@@ -65,19 +63,19 @@ public class GraveBlock extends AbstractGraveBlock implements BlockEntityProvide
                 GravesMod.LOGGER.error("Exception occurred while breaking grave!", e);
             }
         }
-        return super.onBreak(world, pos, state, player);
+        return super.playerWillDestroy(world, pos, state, player);
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity playerTemp, BlockHitResult hit) {
-        if (!(playerTemp instanceof ServerPlayerEntity player)) {
-            return playerTemp.isSneaking() ? ActionResult.PASS : ActionResult.FAIL;
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player playerTemp, BlockHitResult hit) {
+        if (!(playerTemp instanceof ServerPlayer player)) {
+            return playerTemp.isShiftKeyDown() ? InteractionResult.PASS : InteractionResult.FAIL;
         }
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        var stack = player.getStackInHand(Hand.MAIN_HAND);
+        var stack = player.getItemInHand(InteractionHand.MAIN_HAND);
 
-        if (!stack.isEmpty() && playerTemp.isSneaking()) {
-            return ActionResult.PASS;
+        if (!stack.isEmpty() && playerTemp.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
 
         if (blockEntity instanceof GraveBlockEntity graveBlockEntity && graveBlockEntity.getGrave() != null && graveBlockEntity.getGrave().hasAccess(player)) {
@@ -87,48 +85,48 @@ public class GraveBlock extends AbstractGraveBlock implements BlockEntityProvide
                 grave.updateSelf(world.getServer());
 
                 if (!grave.isRemoved()) {
-                    if (ConfigManager.getConfig().interactions.shiftClickTakesItems && (player.isSneaking() || !ConfigManager.getConfig().interactions.clickGraveToOpenGui)) {
+                    if (ConfigManager.getConfig().interactions.shiftClickTakesItems && (player.isShiftKeyDown() || !ConfigManager.getConfig().interactions.clickGraveToOpenGui)) {
                         grave.quickEquip(player);
-                    } else if (!player.isSneaking()) {
+                    } else if (!player.isShiftKeyDown()) {
                         grave.openUi(player, true, false);
                     } else {
-                        return ActionResult.PASS;
+                        return InteractionResult.PASS;
                     }
                 }
-                return ActionResult.SUCCESS_SERVER;
+                return InteractionResult.SUCCESS_SERVER;
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
 
-        return ActionResult.SUCCESS_SERVER;
+        return InteractionResult.SUCCESS_SERVER;
     }
 
     @Nullable
     @Override
-    public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new GraveBlockEntity(pos, state);
     }
 
     @Nullable
     @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-        return type == GraveBlockEntity.BLOCK_ENTITY_TYPE && !world.isClient() ? GraveBlockEntity::tick : null;
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+        return type == GraveBlockEntity.BLOCK_ENTITY_TYPE && !world.isClientSide() ? GraveBlockEntity::tick : null;
     }
 
     @Override
-    protected @Nullable Grave getGraveData(World world, BlockPos pos) {
+    protected @Nullable Grave getGraveData(Level world, BlockPos pos) {
         var entity = world.getBlockEntity(pos, GraveBlockEntity.BLOCK_ENTITY_TYPE);
         return entity.isPresent() ? entity.get().getGrave() : null;
     }
 
     @Override
-    protected VisualGraveData getVisualData(World world, BlockPos pos, @Nullable Grave grave) {
+    protected VisualGraveData getVisualData(Level world, BlockPos pos, @Nullable Grave grave) {
         return grave != null ? grave.toVisualGraveData() : VisualGraveData.DEFAULT;
     }
 
     @Override
-    protected Map<String, Text> getPlaceholders(MinecraftServer server, VisualGraveData visualGrave, @Nullable Grave grave) {
+    protected Map<String, Component> getPlaceholders(MinecraftServer server, VisualGraveData visualGrave, @Nullable Grave grave) {
         return grave != null ? grave.getPlaceholders(server) : visualGrave.getPlaceholders(server);
     }
 }

@@ -5,9 +5,9 @@ import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.sgui.api.elements.GuiElement;
 import eu.pb4.sgui.api.elements.GuiElementBuilderInterface;
 import eu.pb4.sgui.api.elements.GuiElementInterface;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 public record GuiSlot(@Nullable GuiElementInterface element, @Nullable Slot slot) {
@@ -75,7 +75,7 @@ public record GuiSlot(@Nullable GuiElementInterface element, @Nullable Slot slot
         return EMPTY;
     }
 
-    public static GuiSlot lowerBar(ServerPlayerEntity player) {
+    public static GuiSlot lowerBar(ServerPlayer player) {
         return GraveTextures.hasGuiTexture(player) ? GuiSlot.empty() : GuiSlot.filler();
     }
 

@@ -4,34 +4,34 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSerializationContext;
 import eu.pb4.graves.config.BaseGson;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.s2c.play.ExperienceBarUpdateS2CPacket;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundSetExperiencePacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public record GenericCost<T>(Type<T> type, T object, int count) {
-    public boolean takeCost(ServerPlayerEntity player) {
+    public boolean takeCost(ServerPlayer player) {
         return player.isCreative() || this.type.checkCost(player, object, count, true);
     }
 
-    public boolean checkCost(ServerPlayerEntity player) {
+    public boolean checkCost(ServerPlayer player) {
         return player.isCreative() || this.type.checkCost(player, object, count, false);
     }
 
-    public void returnCost(ServerPlayerEntity player) {
+    public void returnCost(ServerPlayer player) {
         if (!player.isCreative()) {
             this.type.returnCost(player, this.object, count);
         }
     }
 
-    public Map<String, Text> getPlaceholders() {
-        return Map.of("cost", this.type.toText(this.object, this.count), "item", this.type.toName(this.object), "count", Text.literal("" + this.count));
+    public Map<String, Component> getPlaceholders() {
+        return Map.of("cost", this.type.toText(this.object, this.count), "item", this.type.toName(this.object), "count", Component.literal("" + this.count));
     }
 
     public boolean isFree() {
@@ -47,7 +47,7 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
                 '}';
     }
 
-    public Text toText() {
+    public Component toText() {
         return this.type.toText(this.object, this.count);
     }
 
@@ -62,7 +62,7 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
             if (p.experienceLevel >= c) {
                 if (x) {
                     p.experienceLevel -= c;
-                    p.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
+                    p.connection.send(new ClientboundSetExperiencePacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
                 }
                 return true;
             } else {
@@ -70,24 +70,24 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
             }
         }, (p, c) -> {
             p.experienceLevel += c;
-            p.networkHandler.sendPacket(new ExperienceBarUpdateS2CPacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
+            p.connection.send(new ClientboundSetExperiencePacket(p.experienceProgress, p.totalExperience, p.experienceLevel));
         }));
 
         Type<ItemStack> ITEM = reg("item", new Type<>() {
             @Override
-            public boolean checkCost(ServerPlayerEntity player, ItemStack object, int count, boolean take) {
+            public boolean checkCost(ServerPlayer player, ItemStack object, int count, boolean take) {
                 var c = 0;
-                for (var i = 0; i < player.getInventory().size(); i++) {
-                    var stack = player.getInventory().getStack(i);
+                for (var i = 0; i < player.getInventory().getContainerSize(); i++) {
+                    var stack = player.getInventory().getItem(i);
 
-                    if (ItemStack.areItemsAndComponentsEqual(stack, object)) {
+                    if (ItemStack.isSameItemSameComponents(stack, object)) {
                         c += stack.getCount();
                     }
                 }
 
                 if (c >= count) {
                     if (take) {
-                        player.getInventory().remove((i) -> !i.isEmpty() && ItemStack.areItemsAndComponentsEqual(i, object), count, GraveUtils.EMPTY_INVENTORY);
+                        player.getInventory().clearOrCountMatchingItems((i) -> !i.isEmpty() && ItemStack.isSameItemSameComponents(i, object), count, GraveUtils.EMPTY_INVENTORY);
                     }
                     return true;
                 } else {
@@ -117,15 +117,15 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
             }
 
             @Override
-            public Text toName(ItemStack object) {
-                return object.getName();
+            public Component toName(ItemStack object) {
+                return object.getHoverName();
             }
 
             @Override
-            public void returnCost(ServerPlayerEntity player, ItemStack object, int count) {
+            public void returnCost(ServerPlayer player, ItemStack object, int count) {
                 var copy = object.copy();
                 copy.setCount(count);
-                player.giveItemStack(copy);
+                player.addItem(copy);
             }
         });
 
@@ -150,25 +150,25 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
 
                 @Override
                 public ItemStack getIcon(Object object, int count) {
-                    return icon.getDefaultStack();
+                    return icon.getDefaultInstance();
                 }
 
                 @Override
-                public Text toName(Object object) {
-                    return Text.translatable("text.graves.cost." + TYPE_NAME.get(this));
+                public Component toName(Object object) {
+                    return Component.translatable("text.graves.cost." + TYPE_NAME.get(this));
                 }
 
                 @Override
-                public Text toText(Object object, int i) {
+                public Component toText(Object object, int i) {
                     return singular ? toName(object) : Type.super.toText(object, i);
                 }
 
-                public boolean checkCost(ServerPlayerEntity player, Object object, int count, boolean take) {
+                public boolean checkCost(ServerPlayer player, Object object, int count, boolean take) {
                     return takeCost.checkCost(player, count, take);
                 }
 
                 @Override
-                public void returnCost(ServerPlayerEntity player, Object object, int count) {
+                public void returnCost(ServerPlayer player, Object object, int count) {
                     returnCostFunc.returnCost(player, count);
                 }
             };
@@ -177,22 +177,22 @@ public record GenericCost<T>(Type<T> type, T object, int count) {
         T decodeConfig(@Nullable JsonElement object, JsonDeserializationContext jsonDeserializationContext);
         JsonElement encodeConfig(T object, JsonSerializationContext jsonSerializationContext);
         ItemStack getIcon(T object, int count);
-        default Text toText(T object, int i) {
-            return Text.empty().append(toName(object)).append(" × ").append("" + i);
+        default Component toText(T object, int i) {
+            return Component.empty().append(toName(object)).append(" × ").append("" + i);
         }
-        Text toName(T object);
+        Component toName(T object);
 
-        void returnCost(ServerPlayerEntity player, T object, int count);
+        void returnCost(ServerPlayer player, T object, int count);
 
         interface ContextlessCost {
-            boolean checkCost(ServerPlayerEntity player, int count, boolean take);
+            boolean checkCost(ServerPlayer player, int count, boolean take);
         }
         interface ReturnCostFunc {
-            void returnCost(ServerPlayerEntity player, int count);
+            void returnCost(ServerPlayer player, int count);
         }
     }
 
     public interface CostFunc<T> {
-        boolean checkCost(ServerPlayerEntity player, T object, int count, boolean take);
+        boolean checkCost(ServerPlayer player, T object, int count, boolean take);
     }
 }

@@ -1,23 +1,20 @@
 package eu.pb4.graves.registry;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.Inventories;
-import net.minecraft.inventory.Inventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.storage.ReadView;
-import net.minecraft.storage.WriteView;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.math.BlockPos;
-
 import java.util.function.IntFunction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Container;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
-public class ContainerGraveBlockEntity extends VisualGraveBlockEntity implements Inventory {
+public class ContainerGraveBlockEntity extends VisualGraveBlockEntity implements Container {
     public static BlockEntityType<ContainerGraveBlockEntity> BLOCK_ENTITY_TYPE;
-    protected final DefaultedList<ItemStack> items = DefaultedList.ofSize(9, ItemStack.EMPTY);
+    protected final NonNullList<ItemStack> items = NonNullList.withSize(9, ItemStack.EMPTY);
 
     public ContainerGraveBlockEntity(BlockPos pos, BlockState state) {
         super(BLOCK_ENTITY_TYPE, pos, state);
@@ -25,34 +22,34 @@ public class ContainerGraveBlockEntity extends VisualGraveBlockEntity implements
     }
 
     @Override
-    protected void writeData(WriteView view) {
-        super.writeData(view);
-        Inventories.writeData(view, this.items);
+    protected void saveAdditional(ValueOutput view) {
+        super.saveAdditional(view);
+        ContainerHelper.saveAllItems(view, this.items);
     }
 
     @Override
-    public void readData(ReadView view) {
-        super.readData(view);
-        Inventories.readData(view, this.items);
+    public void loadAdditional(ValueInput view) {
+        super.loadAdditional(view);
+        ContainerHelper.loadAllItems(view, this.items);
     }
 
     @Override
     public ItemStack getGraveSlotItem(int i) {
-        if (i < this.size()) {
-            return this.getStack(i);
+        if (i < this.getContainerSize()) {
+            return this.getItem(i);
         }
         return ItemStack.EMPTY;
     }
 
     @Override
-    public int size() {
+    public int getContainerSize() {
         return 9;
     }
 
     @Override
     public boolean isEmpty() {
         for (var i = 0; i < 9; i++) {
-            if (!this.getStack(i).isEmpty()) {
+            if (!this.getItem(i).isEmpty()) {
                 return false;
             }
         }
@@ -60,36 +57,36 @@ public class ContainerGraveBlockEntity extends VisualGraveBlockEntity implements
     }
 
     @Override
-    public ItemStack getStack(int slot) {
+    public ItemStack getItem(int slot) {
         return this.items.get(slot);
     }
 
     @Override
-    public ItemStack removeStack(int slot, int amount) {
-        this.markDirty();
-        return Inventories.splitStack(this.items, slot, amount);
+    public ItemStack removeItem(int slot, int amount) {
+        this.setChanged();
+        return ContainerHelper.removeItem(this.items, slot, amount);
     }
 
     @Override
-    public ItemStack removeStack(int slot) {
-        this.markDirty();
-        return Inventories.removeStack(this.items, slot);
+    public ItemStack removeItemNoUpdate(int slot) {
+        this.setChanged();
+        return ContainerHelper.takeItem(this.items, slot);
     }
 
     @Override
-    public void setStack(int slot, ItemStack stack) {
+    public void setItem(int slot, ItemStack stack) {
         this.items.set(slot, stack);
-        this.markDirty();
+        this.setChanged();
     }
 
     @Override
-    public boolean canPlayerUse(PlayerEntity player) {
+    public boolean stillValid(Player player) {
         return true;
     }
 
     @Override
-    public void clear() {
+    public void clearContent() {
         this.items.clear();
-        this.markDirty();
+        this.setChanged();
     }
 }

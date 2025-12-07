@@ -2,10 +2,9 @@ package eu.pb4.graves.event;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.ActionResult;
-
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.ItemStack;
 import java.util.List;
 
 /**
@@ -15,14 +14,14 @@ public interface PlayerGraveItemAddedEvent {
     Event<PlayerGraveItemAddedEvent> EVENT = EventFactory.createArrayBacked(PlayerGraveItemAddedEvent.class,
                 (listeners) -> (player, item) -> {
                     for (PlayerGraveItemAddedEvent listener : listeners) {
-                        ActionResult result = listener.canAddItem(player, item);
+                        InteractionResult result = listener.canAddItem(player, item);
 
-                        if (result != ActionResult.PASS) {
+                        if (result != InteractionResult.PASS) {
                             return result;
                         }
                     }
-                    return ActionResult.PASS;
+                    return InteractionResult.PASS;
                 });
 
-    ActionResult canAddItem(ServerPlayerEntity player, ItemStack item);
+    InteractionResult canAddItem(ServerPlayer player, ItemStack item);
 }

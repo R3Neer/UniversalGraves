@@ -1,12 +1,12 @@
 package eu.pb4.graves.mixin;
 
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.entity.decoration.MannequinEntity;
+import net.minecraft.world.entity.decoration.Mannequin;
+import net.minecraft.world.item.component.ResolvableProfile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(MannequinEntity.class)
+@Mixin(Mannequin.class)
 public interface MannequinEntityAccessor {
     @Invoker
-    void callSetMannequinProfile(ProfileComponent profile);
+    void callSetProfile(ResolvableProfile profile);
 }

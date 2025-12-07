@@ -5,34 +5,36 @@ import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.mixin.PlayerLikeEntityAccessor;
 import eu.pb4.graves.other.VisualGraveData;
 import eu.pb4.polymer.core.api.item.PolymerItem;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.component.type.ProfileComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.ResolvableProfile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 import xyz.nucleoid.packettweaker.PacketContext;
 
 
 public class CointainerGraveBlockItem extends BlockItem implements PolymerItem {
-    public CointainerGraveBlockItem(Block block, Settings settings) {
+    public CointainerGraveBlockItem(Block block, Properties settings) {
         super(block, settings);
     }
 
-    protected boolean postPlacement(BlockPos pos, World world, @Nullable PlayerEntity player, ItemStack stack, BlockState state) {
-        boolean bl = super.postPlacement(pos, world, player, stack, state);
-        if (!world.isClient() && !bl && player instanceof ServerPlayerEntity serverPlayer && world.getBlockEntity(pos) instanceof VisualGraveBlockEntity grave) {
+    protected boolean updateCustomBlockEntityTag(BlockPos pos, Level world, @Nullable Player player, ItemStack stack, BlockState state) {
+        boolean bl = super.updateCustomBlockEntityTag(pos, world, player, stack, state);
+        if (!world.isClientSide() && !bl && player instanceof ServerPlayer serverPlayer && world.getBlockEntity(pos) instanceof VisualGraveBlockEntity grave) {
             grave.openEditScreen(serverPlayer);
 
             grave.setVisualData(new VisualGraveData(
-                    ProfileComponent.ofStatic(!player.isSneaking() ? player.getGameProfile() : new GameProfile(MathHelper.randomUuid(), "")),
-                    player.getDataTracker().get(PlayerLikeEntityAccessor.getPLAYER_MODE_CUSTOMIZATION_ID()),
+                    ResolvableProfile.createResolved(!player.isShiftKeyDown() ? player.getGameProfile() : new GameProfile(Mth.createInsecureUUID(), "")),
+                    player.getEntityData().get(PlayerLikeEntityAccessor.getDATA_PLAYER_MODE_CUSTOMISATION()),
                     player.getMainArm(),
                     grave.getGrave().deathCause(),
                     grave.getGrave().creationTime(),
@@ -53,11 +55,11 @@ public class CointainerGraveBlockItem extends BlockItem implements PolymerItem {
     }
 
     @Override
-    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipType tooltipType, PacketContext context) {
+    public ItemStack getPolymerItemStack(ItemStack itemStack, TooltipFlag tooltipType, PacketContext context) {
         var out = PolymerItem.super.getPolymerItemStack(itemStack, tooltipType, context);
         var conf = ConfigManager.getConfig().model.gravestoneItemNbt;
         if (!conf.isEmpty()) {
-            out.applyComponentsFrom(conf);
+            out.applyComponents(conf);
         }
         return out;
     }

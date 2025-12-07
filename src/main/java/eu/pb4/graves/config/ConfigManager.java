@@ -7,10 +7,7 @@ import eu.pb4.graves.model.DefaultGraveModels;
 import eu.pb4.graves.model.GraveModel;
 import eu.pb4.graves.other.ImplementedInventory;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.RegistryWrapper;
-
+import net.minecraft.core.HolderLookup;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,7 +37,7 @@ public class ConfigManager {
         return ENABLED;
     }
 
-    public static boolean loadConfig(RegistryWrapper.WrapperLookup lookup) {
+    public static boolean loadConfig(HolderLookup.Provider lookup) {
         ENABLED = false;
 
         CONFIG = null;
@@ -92,7 +89,7 @@ public class ConfigManager {
         return ENABLED;
     }
 
-    public static void overrideConfig(Config configData, RegistryWrapper.WrapperLookup lookup) {
+    public static void overrideConfig(Config configData, HolderLookup.Provider lookup) {
         try {
             Files.writeString(CONFIG_PATH, BaseGson.getGson(lookup).toJson(configData));
             CONFIG = configData;

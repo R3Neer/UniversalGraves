@@ -12,20 +12,13 @@ import eu.pb4.polymer.virtualentity.api.elements.AbstractElement;
 import eu.pb4.polymer.virtualentity.api.elements.EntityElement;
 import eu.pb4.polymer.virtualentity.api.elements.VirtualElement;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.particle.ParticleEffect;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
-import net.minecraft.world.World;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -35,7 +28,7 @@ import java.util.function.Consumer;
 
 public class ParticleModelPart extends ModelPart<ParticleModelPart.ParticleElement, ParticleModelPart> {
     @SerializedName("particle")
-    public ParticleEffect particleEffect;
+    public ParticleOptions particleEffect;
 
     @SerializedName("wait_duration")
     public int waitDuration = 5;
@@ -50,7 +43,7 @@ public class ParticleModelPart extends ModelPart<ParticleModelPart.ParticleEleme
     public int count = 0;
 
     @Override
-    public ParticleElement construct(ServerWorld world) {
+    public ParticleElement construct(ServerLevel world) {
         return new ParticleElement(this.particleEffect, this.delta, this.speed, this.count, this.waitDuration);
     }
 
@@ -60,15 +53,15 @@ public class ParticleModelPart extends ModelPart<ParticleModelPart.ParticleEleme
     }
 
     public static class ParticleElement extends AbstractElement {
-        private final ParticleEffect particleEffect;
+        private final ParticleOptions particleEffect;
         private final Vector3f delta;
         private final float speed;
         private final int count;
         private final int waitDuration;
         private int tick = 0;
-        private Packet<ClientPlayPacketListener> packet;
+        private Packet<ClientGamePacketListener> packet;
 
-        public ParticleElement(ParticleEffect particleEffect, Vector3f delta, float speed, int count, int waitDuration) {
+        public ParticleElement(ParticleOptions particleEffect, Vector3f delta, float speed, int count, int waitDuration) {
             this.particleEffect = particleEffect;
             this.delta = delta;
             this.speed = speed;
@@ -77,7 +70,7 @@ public class ParticleModelPart extends ModelPart<ParticleModelPart.ParticleEleme
         }
 
         @Override
-        public void setOffset(Vec3d offset) {
+        public void setOffset(Vec3 offset) {
             super.setOffset(offset);
             this.packet = null;
         }
@@ -88,20 +81,20 @@ public class ParticleModelPart extends ModelPart<ParticleModelPart.ParticleEleme
         }
 
         @Override
-        public void startWatching(ServerPlayerEntity player, Consumer<Packet<ClientPlayPacketListener>> packetConsumer) {}
+        public void startWatching(ServerPlayer player, Consumer<Packet<ClientGamePacketListener>> packetConsumer) {}
 
         @Override
-        public void stopWatching(ServerPlayerEntity player, Consumer<Packet<ClientPlayPacketListener>> packetConsumer) {}
+        public void stopWatching(ServerPlayer player, Consumer<Packet<ClientGamePacketListener>> packetConsumer) {}
 
         @Override
-        public void notifyMove(Vec3d oldPos, Vec3d currentPos, Vec3d delta) {}
+        public void notifyMove(Vec3 oldPos, Vec3 currentPos, Vec3 delta) {}
 
         @Override
         public void tick() {
             if (this.tick++ % this.waitDuration == 0) {
                 if (this.packet == null) {
                     var pos = Objects.requireNonNull(this.getHolder()).getPos().add(this.getOffset());
-                    this.packet = new ParticleS2CPacket(this.particleEffect, false, false, pos.x, pos.y, pos.z, this.delta.x, this.delta.y, this.delta.z, this.speed, this.count);
+                    this.packet = new ClientboundLevelParticlesPacket(this.particleEffect, false, false, pos.x, pos.y, pos.z, this.delta.x, this.delta.y, this.delta.z, this.speed, this.count);
                 }
 
                 Objects.requireNonNull(this.getHolder()).sendPacket(this.packet);

@@ -15,14 +15,12 @@ import eu.pb4.predicate.api.BuiltinPredicates;
 import eu.pb4.predicate.api.MinecraftPredicate;
 import eu.pb4.predicate.api.PredicateContext;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.component.ComponentMap;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Identifier;
-
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import java.util.*;
 
 public class Config {
@@ -37,7 +35,7 @@ public class Config {
     @SerializedName("protection")
     public Protection protection = new Protection();
 
-    public String getGraveModel(ServerPlayerEntity player) {
+    public String getGraveModel(ServerPlayer player) {
         var context = PredicateContext.of(player);
         for (var model : this.model.alternative) {
             if (model.predicate.test(context).success()) {
@@ -184,7 +182,7 @@ public class Config {
         public boolean allowMovingDuringTeleportation = false;
 
         @SerializedName("text")
-        public Texts text = new Texts();
+        public eu.pb4.graves.config.Config.Teleportation.Texts text = new eu.pb4.graves.config.Config.Teleportation.Texts();
 
         public static class Texts {
             @SerializedName("timer")
@@ -211,7 +209,7 @@ public class Config {
         @SerializedName("gravestone_item_base")
         public Item gravestoneItemBase = Items.SKELETON_SKULL;
         @SerializedName("gravestone_item_nbt")
-        public ComponentMap gravestoneItemNbt = ComponentMap.EMPTY;
+        public DataComponentMap gravestoneItemNbt = DataComponentMap.EMPTY;
         public static class CheckedModel {
             @SerializedName("require")
             public MinecraftPredicate predicate = BuiltinPredicates.operatorLevel(0);
