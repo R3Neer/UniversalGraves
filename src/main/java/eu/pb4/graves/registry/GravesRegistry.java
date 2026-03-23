@@ -1,5 +1,6 @@
 package eu.pb4.graves.registry;
 
+import eu.pb4.graves.GravesMod;
 import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
 import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
@@ -49,7 +50,7 @@ public interface GravesRegistry {
     }
 
     static <T extends Block> T register(String path, BlockBehaviour.Properties settings, Function<BlockBehaviour.Properties, T> function) {
-        var id = Identifier.fromNamespaceAndPath("universal_graves", path);
+        var id = GravesMod.id(path);
         var key = ResourceKey.create(Registries.BLOCK, id);
         settings.setId(key);
         var value = function.apply(settings);

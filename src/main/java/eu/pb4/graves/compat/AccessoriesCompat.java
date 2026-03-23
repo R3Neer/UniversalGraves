@@ -1,5 +1,5 @@
 package eu.pb4.graves.compat;
-
+/*
 import eu.pb4.graves.GravesApi;
 import eu.pb4.graves.grave.GraveInventoryMask;
 import io.wispforest.accessories.api.AccessoriesCapability;
@@ -130,3 +130,4 @@ public record AccessoriesCompat() implements GraveInventoryMask {
         } : null;
     }
 }
+*/

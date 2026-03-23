@@ -3,7 +3,7 @@ package eu.pb4.graves.ui;
 import eu.pb4.graves.GraveTextures;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.sgui.api.elements.GuiElement;
-import eu.pb4.sgui.api.elements.GuiElementBuilderInterface;
+import eu.pb4.sgui.api.elements.GuiElementBuilderCreator;
 import eu.pb4.sgui.api.elements.SimpleGuiElement;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.inventory.Slot;
@@ -17,7 +17,7 @@ public record GuiSlot(@Nullable GuiElement element, @Nullable Slot slot) {
         return new GuiSlot(element, null);
     }
 
-    public static GuiSlot of(GuiElementBuilderInterface<?> element) {
+    public static GuiSlot of(GuiElementBuilderCreator<?> element) {
         return new GuiSlot(element.build(), null);
     }
 
@@ -30,16 +30,14 @@ public record GuiSlot(@Nullable GuiElement element, @Nullable Slot slot) {
         if (gui.canNextPage()) {
             return GuiSlot.of(
                     config.ui.nextButton.get(true).builder()
-                            .noDefaults()
                             .hideDefaultTooltip()
-                            .setCallback((x, y, z) -> {
+                            .setCallback(() -> {
                                 PagedGui.playClickSound(gui.getPlayer());
                                 gui.nextPage();
                             })
             );
         } else {
             return GuiSlot.of(config.ui.nextButton.get(false).builder()
-                    .noDefaults()
                     .hideDefaultTooltip());
         }
     }
@@ -50,16 +48,14 @@ public record GuiSlot(@Nullable GuiElement element, @Nullable Slot slot) {
         if (gui.canPreviousPage()) {
             return GuiSlot.of(
                     config.ui.previousButton.get(true).builder()
-                            .noDefaults()
                             .hideDefaultTooltip()
-                            .setCallback((x, y, z) -> {
+                            .setCallback(() -> {
                                 PagedGui.playClickSound(gui.getPlayer());
                                 gui.previousPage();
                             })
             );
         } else {
             return GuiSlot.of(config.ui.previousButton.get(false).builder()
-                    .noDefaults()
                     .hideDefaultTooltip()
             );
         }
@@ -83,7 +79,6 @@ public record GuiSlot(@Nullable GuiElement element, @Nullable Slot slot) {
         var config = ConfigManager.getConfig();
         return GuiSlot.of(
                 config.ui.backButton.builder()
-                        .noDefaults()
                         .hideDefaultTooltip()
                         .setCallback((x, y, z, d) -> {
                             PagedGui.playClickSound(d.getPlayer());

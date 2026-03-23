@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.players.NameAndId;
 
 /**
  * This even is use for checking, if graves is in valid position
@@ -23,5 +24,5 @@ public interface GraveValidPosCheckEvent {
                     return result;
                 });
 
-    GraveUtils.BlockResult isValid(GameProfile player, ServerLevel world, BlockPos pos);
+    GraveUtils.BlockResult isValid(NameAndId player, ServerLevel world, BlockPos pos);
 }

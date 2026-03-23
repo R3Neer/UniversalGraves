@@ -1,5 +1,5 @@
 package eu.pb4.graves.compat;
-
+/*
 import dev.emi.trinkets.api.TrinketEnums;
 import dev.emi.trinkets.api.TrinketInventory;
 import dev.emi.trinkets.api.TrinketsApi;
@@ -111,3 +111,4 @@ public record TrinketsCompat(boolean preventAddition) implements GraveInventoryM
         return null;
     }
 }
+*/

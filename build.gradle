@@ -58,29 +58,28 @@ dependencies {
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 
-	implementation include("com.github.x3rt:sgui:26.1-SNAPSHOT")
-	implementation include("eu.pb4:placeholder-api:3.0.0-beta.1+26.1")
-//	modImplementation include('xyz.nucleoid:server-translations-api:2.5.2+1.21.9-pre3')
-	implementation 'com.github.x3rt.polymer:polymer-core:dev~26.1-jitpack-SNAPSHOT'
-	implementation 'com.github.x3rt.polymer:polymer-resource-pack:dev~26.1-jitpack-SNAPSHOT'
-	implementation 'com.github.x3rt.polymer:polymer-virtual-entity:dev~26.1-jitpack-SNAPSHOT'
-	implementation include('com.github.x3rt:PredicateAPI:26.1-SNAPSHOT')
-	implementation include("eu.pb4:common-protection-api:1.0.0")
+	implementation include("eu.pb4:sgui:2.0.0-beta.2+26.1")
+	implementation include("eu.pb4:placeholder-api:3.0.0-beta.2+26.1")
+	implementation include('xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3')
+	implementation 'eu.pb4:polymer-core:0.16.0-pre.2+26.1-rc-2'
+	implementation 'eu.pb4:polymer-resource-pack:0.16.0-pre.2+26.1-rc-2'
+	implementation 'eu.pb4:polymer-virtual-entity:0.16.0-pre.2+26.1-rc-2'
+	implementation include('eu.pb4:predicate-api:0.8.0+26.1')
+	implementation include("eu.pb4:common-protection-api:2.0.0")
+	implementation include("xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3")
 
-//	implementation include("me.lucko:fabric-permissions-api:0.6.0-patbox")
+	//compileOnly "dev.emi:trinkets:3.10.0"
+	//compileOnly "maven.modrinth:inventorio:1.10.3+1.20.2"
+	//compileOnly "io.wispforest:accessories-fabric:1.4.0-beta+1.21.10"
 
-	compileOnly "dev.emi:trinkets:3.10.0"
-	compileOnly "maven.modrinth:inventorio:1.10.3+1.20.2"
-	compileOnly "io.wispforest:accessories-fabric:1.4.0-beta+1.21.10"
-
-	compileOnly "maven.modrinth:goml-reserved:1.13.1+1.21"
+	//compileOnly "maven.modrinth:goml-reserved:1.13.1+1.21"
 	compileOnly 'com.jamieswhiteshirt:rtree-3i-lite:0.3.0'
-	compileOnly "org.ladysnake.cardinal-components-api:cardinal-components-base:6.1.0"
+	//compileOnly "org.ladysnake.cardinal-components-api:cardinal-components-base:6.1.0"
 
-	compileOnly("com.terraformersmc:modmenu:7.2.2")
+	//compileOnly("com.terraformersmc:modmenu:7.2.2")
 
 	// PSA: Some older mods, compiled on Loom 0.2.1, might have outdated Maven POMs.
 	// You may need to force-disable transitiveness on them.
@@ -156,7 +155,6 @@ curseforge {
 			changelogType = "markdown"
 			addGameVersion((project.minecraft_version.contains("-") ? ((String) project.minecraft_version.split("-")[0] + "-snapshot") : project.minecraft_version))
 			addGameVersion "Fabric"
-			addGameVersion "Quilt"
 
 			relations {
 				requiredDependency "polymer"
@@ -187,7 +185,7 @@ if (System.getenv("MODRINTH")) {
 		uploadFile = jar // This links to a task that builds your mod jar and sets "uploadFile" to the mod jar.
 		gameVersions = [((String) project.minecraft_version)]
 		changelog = System.getenv("CHANGELOG")
-		loaders = ["fabric"/*, "quilt"*/]
+		loaders = ["fabric"]
 		dependencies {
 			required.project "polymer"
 		}

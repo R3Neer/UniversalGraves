@@ -150,7 +150,7 @@ public class VisualGraveBlockEntity extends AbstractGraveBlockEntity {
     public void openEditScreen(ServerPlayer player) {
         var sign = new SignGui(player) {
             @Override
-            public void onClose() {
+            public void onRemoved() {
                 VisualGraveBlockEntity.this.textOverrides = new Component[]{
                         this.getLine(0),
                         this.getLine(1),

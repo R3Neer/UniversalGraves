@@ -20,7 +20,7 @@ public class GraveGameRules {
     }
 
     public static int getProtectionTime(MinecraftServer server) {
-        var rule = server.overworld().getGameRules().get(PROTECTION_TIME);
+        var rule = server.getGameRules().get(PROTECTION_TIME);
 
         if (rule == -2) {
             return ConfigManager.getConfig().protection.protectionTime;
@@ -30,7 +30,7 @@ public class GraveGameRules {
     }
 
     public static int getBreakingTime(MinecraftServer server) {
-        var rule = server.overworld().getGameRules().get(BREAKING_TIME);
+        var rule = server.getGameRules().get(BREAKING_TIME);
 
         if (rule == -2) {
             return ConfigManager.getConfig().protection.breakingTime;

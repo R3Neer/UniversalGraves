@@ -29,6 +29,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.TicketType;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -65,9 +66,9 @@ public class GraveUtils {
     public static final TagKey<Enchantment> BLOCKED_ENCHANTMENTS_TAG = TagKey.create(Registries.ENCHANTMENT, Identifier.fromNamespaceAndPath("universal_graves", "blocked_enchantments"));
     public static final Container EMPTY_INVENTORY = new SimpleContainer(0);
     public static BlockCheckResult findGravePosition(ServerPlayer player, ServerLevel world, BlockPos blockPos, int maxDistance, boolean anyBlock) {
-        return findGravePosition(player.getGameProfile(), player, world, blockPos, maxDistance, anyBlock);
+        return findGravePosition(player.nameAndId(), player, world, blockPos, maxDistance, anyBlock);
     }
-    public static BlockCheckResult findGravePosition(GameProfile profile, @Nullable ServerPlayer player, ServerLevel world, BlockPos blockPos, int maxDistance, boolean anyBlock) {
+    public static BlockCheckResult findGravePosition(NameAndId profile, @Nullable ServerPlayer player, ServerLevel world, BlockPos blockPos, int maxDistance, boolean anyBlock) {
         var border = world.getWorldBorder();
         var config = ConfigManager.getConfig();
 
@@ -106,7 +107,7 @@ public class GraveUtils {
         return checkResult;
     }
 
-    private static BlockCheckResult findPos(GameProfile profile,  @Nullable ServerPlayer player, ServerLevel world, BlockPos blockPos, int maxDistance, boolean allowAnyBlock, int iteration, Config config) {
+    private static BlockCheckResult findPos(NameAndId profile,  @Nullable ServerPlayer player, ServerLevel world, BlockPos blockPos, int maxDistance, boolean allowAnyBlock, int iteration, Config config) {
         int line = 1;
         var border = world.getWorldBorder();
         BlockResult result = isValidPos(profile, player, world, border, blockPos, allowAnyBlock, config);
@@ -158,7 +159,7 @@ public class GraveUtils {
     }
 
 
-    private static BlockResult isValidPos(GameProfile profile, @Nullable ServerPlayer player, ServerLevel world, WorldBorder border, BlockPos pos, boolean anyBlock, Config config) {
+    private static BlockResult isValidPos(NameAndId profile, @Nullable ServerPlayer player, ServerLevel world, WorldBorder border, BlockPos pos, boolean anyBlock, Config config) {
         BlockState state = world.getBlockState(pos);
 
         if (canReplaceState(state, anyBlock) && (!config.placement.moveInsideBorder || border.isWithinBounds(pos)) && pos.getY() >= world.getMinY() && pos.getY() < world.getMaxY() + 1) {
@@ -368,7 +369,7 @@ public class GraveUtils {
                             source.getLocalizedDeathMessage(player),
                             allowedUUID,
                             items,
-                            (int) (world.getServer().overworld().getDayTime() / 24000)
+                            (int) (world.getServer().overworld().getDefaultClockTime() / 24000)
                     );
 
                     ((PlayerAdditions) player).graves$setLastGrave(grave.getId());

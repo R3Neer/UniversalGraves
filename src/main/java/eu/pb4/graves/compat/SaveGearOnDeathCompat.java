@@ -1,5 +1,5 @@
 package eu.pb4.graves.compat;
-
+/*
 import eu.pb4.graves.GravesApi;
 import net.minecraft.world.InteractionResult;
 
@@ -12,3 +12,4 @@ public class SaveGearOnDeathCompat {
         });
     }
 }
+*/

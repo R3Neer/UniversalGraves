@@ -11,7 +11,6 @@ import eu.pb4.graves.other.*;
 import eu.pb4.graves.registry.GraveBlockEntity;
 import eu.pb4.graves.registry.GravesRegistry;
 import eu.pb4.graves.ui.GraveGui;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -25,6 +24,8 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.Container;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.HumanoidArm;
@@ -37,6 +38,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static eu.pb4.graves.GravesMod.id;
 
 @SuppressWarnings({"unused"})
 public final class Grave {
@@ -307,15 +310,23 @@ public final class Grave {
         return !this.requirePayment && this.hasAccess(profile);
     }
 
+    public boolean canTakeFrom(NameAndId profile) {
+        return !this.requirePayment && this.hasAccess(profile);
+    }
+
     public boolean canTakeFrom(Player entity) {
-        return this.canTakeFrom(entity.getGameProfile()) || (entity.isCreative() && Permissions.check(entity.createCommandSourceStackForNameResolution((ServerLevel) entity.level()), "graves.can_open_others", 3));
+        return this.canTakeFrom(entity.getGameProfile()) || (entity.isCreative() && FabricPermissionBridge.checkPermission(entity.createCommandSourceStackForNameResolution((ServerLevel) entity.level()), id("can_open_others"), PermissionLevel.ADMINS));
     }
 
     public boolean hasAccess(Player entity) {
-        return hasAccess(entity.getGameProfile()) || (entity.isCreative() && Permissions.check(entity.createCommandSourceStackForNameResolution((ServerLevel) entity.level()), "graves.can_open_others", 3));
+        return hasAccess(entity.getGameProfile()) || (entity.isCreative() && FabricPermissionBridge.checkPermission(entity.createCommandSourceStackForNameResolution((ServerLevel) entity.level()), id("can_open_others"), PermissionLevel.ADMINS));
     }
 
     public boolean hasAccess(GameProfile profile) {
+        return !this.isProtected() || (this.gameProfile != null && this.gameProfile.id().equals(profile.id())) || this.allowedUUIDs.contains(profile.id());
+    }
+
+    public boolean hasAccess(NameAndId profile) {
         return !this.isProtected() || (this.gameProfile != null && this.gameProfile.id().equals(profile.id())) || this.allowedUUIDs.contains(profile.id());
     }
 
@@ -558,7 +569,7 @@ public final class Grave {
         if (config.placement.activelyMoveInsideBorder && config.placement.moveInsideBorder) {
             var world = server.getLevel(ResourceKey.create(Registries.DIMENSION, this.getLocation().world()));
             if (world != null && !world.getWorldBorder().isWithinBounds(this.location.blockPos())) {
-                var newPos = GraveUtils.findGravePosition(this.gameProfile, null, world, this.location.blockPos(), config.placement.maxPlacementDistance, config.placement.replaceAnyBlock);
+                var newPos = GraveUtils.findGravePosition(this.gameProfile != null ? new NameAndId(this.gameProfile) : null, null, world, this.location.blockPos(), config.placement.maxPlacementDistance, config.placement.replaceAnyBlock);
                 if (newPos.result().canCreate()) {
                     this.moveTo(server, this.location.withPos(newPos.pos()));
                 }

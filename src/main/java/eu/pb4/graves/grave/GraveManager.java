@@ -24,6 +24,8 @@ import org.jetbrains.annotations.ApiStatus;
 
 import java.util.*;
 
+import static eu.pb4.graves.GravesMod.id;
+
 public final class GraveManager extends SavedData {
     public static GraveManager INSTANCE;
     private final HashMap<UUID, Set<Grave>> byUuid = new HashMap<>();
@@ -37,12 +39,12 @@ public final class GraveManager extends SavedData {
     private int breakingTime;
 
 
-    public static SavedDataType<GraveManager> getType(ServerLevel world) {
-        return new SavedDataType<>("universal-graves", GraveManager::new,
+    public static SavedDataType<GraveManager> getType(MinecraftServer server) {
+        return new SavedDataType<>(id("graves"), GraveManager::new,
                 ExtraCodecs.converter(NbtOps.INSTANCE)
                         .xmap(
-                                nbt -> fromNbt((CompoundTag) nbt, world.registryAccess(), world.getServer().getFixerUpper()),
-                                manager -> manager.writeNbt(new CompoundTag(), world.registryAccess())),
+                                nbt -> fromNbt((CompoundTag) nbt, server.registryAccess(), server.getFixerUpper()),
+                                manager -> manager.writeNbt(new CompoundTag(), server.registryAccess())),
                 null);
     }
 

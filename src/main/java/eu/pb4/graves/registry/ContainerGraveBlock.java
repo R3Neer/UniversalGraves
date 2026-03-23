@@ -121,15 +121,15 @@ public class ContainerGraveBlock extends VisualGraveBlock {
                         }
 
                         @Override
-                        public void onClose() {
-                            super.onClose();
+                        public void onManualClose() {
+                            super.onManualClose();
                             player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BARREL_CLOSE), SoundSource.BLOCKS,
                                     pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 1, world.getRandom().nextFloat() * 0.1F + 0.9F, world.getRandom().nextLong()));
                         }
                     };
                     gui.setTitle(this.getName());
                     for (int i = 0; i < 9; i++) {
-                        gui.setSlotRedirect(i, new Slot(grave, i, 0, 0));
+                        gui.setSlot(i, new Slot(grave, i, 0, 0));
                     }
                     gui.open();
                     player.connection.send(new ClientboundSoundPacket(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SoundEvents.BARREL_OPEN), SoundSource.BLOCKS,

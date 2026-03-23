@@ -1,5 +1,5 @@
 package eu.pb4.graves.compat;
-
+/*
 
 import draylar.goml.api.event.ClaimEvents;
 import eu.pb4.graves.registry.GraveBlockEntity;
@@ -17,3 +17,4 @@ public class GomlCompat {
 
     }
 }
+*/

@@ -1,24 +1,19 @@
 package eu.pb4.graves;
 
 import eu.pb4.common.protection.api.CommonProtection;
-import eu.pb4.graves.compat.*;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.grave.GraveManager;
 import eu.pb4.graves.other.Commands;
 import eu.pb4.graves.other.GraveProtectionProvider;
 import eu.pb4.graves.other.VanillaInventoryMask;
 import eu.pb4.graves.registry.*;
-import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
-import eu.pb4.polymer.core.api.entity.PolymerEntityUtils;
-import eu.pb4.polymer.core.api.other.PolymerComponent;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLevelEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
 import net.minecraft.resources.Identifier;
@@ -46,7 +41,7 @@ public class GravesMod implements ModInitializer {
         GravesRegistry.register();
         Commands.register();
 
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register((e) -> {
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register((e) -> {
             e.accept(GravesRegistry.CONTAINER_GRAVE_ITEM);
         });
 
@@ -62,21 +57,21 @@ public class GravesMod implements ModInitializer {
         GravesApi.registerInventoryMask(Identifier.parse("vanilla"), VanillaInventoryMask.INSTANCE);
 
         if (loader.isModLoaded("goml")) {
-            GomlCompat.register();
+            //GomlCompat.register();
         }
         if (loader.isModLoaded("inventorio")) {
-            InventorioCompat.register();
+            //InventorioCompat.register();
         }
 
         if (loader.isModLoaded("accessories")) {
-            AccessoriesCompat.register();
+            //AccessoriesCompat.register();
         }
 
         if (loader.isModLoaded("trinkets")) {
-            TrinketsCompat.register(loader.isModLoaded("tclayer"));
+            //TrinketsCompat.register(loader.isModLoaded("tclayer"));
         }
         if (loader.isModLoaded("sgod")) {
-            SaveGearOnDeathCompat.register();
+            //SaveGearOnDeathCompat.register();
         }
 
         ServerLifecycleEvents.SERVER_STARTING.register((server) -> ConfigManager.loadConfig(server.registryAccess()));
@@ -88,11 +83,9 @@ public class GravesMod implements ModInitializer {
             CardboardWarning.checkAndAnnounce();
         });
 
-        ServerWorldEvents.LOAD.register(((server, world) -> {
-            if (world == server.overworld()) {
-                GraveManager.INSTANCE = world.getDataStorage().computeIfAbsent(GraveManager.getType(world));
-                GraveManager.INSTANCE.setServer(server);
-            }
+        ServerLifecycleEvents.SERVER_STARTED.register(((server) -> {
+            GraveManager.INSTANCE = server.getDataStorage().computeIfAbsent(GraveManager.getType(server));
+            GraveManager.INSTANCE.setServer(server);
         }));
 
 
@@ -111,5 +104,9 @@ public class GravesMod implements ModInitializer {
         });
     }
 
+
+    public static Identifier id(String path) {
+        return Identifier.fromNamespaceAndPath("universal_graves", path);
+    }
 
 }

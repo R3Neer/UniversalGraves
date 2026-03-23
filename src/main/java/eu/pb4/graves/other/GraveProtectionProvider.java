@@ -5,6 +5,7 @@ import eu.pb4.common.protection.api.ProtectionProvider;
 import eu.pb4.graves.grave.GraveHolder;
 import eu.pb4.graves.registry.GraveBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -27,14 +28,14 @@ public final class GraveProtectionProvider implements ProtectionProvider {
     }
 
     @Override
-    public boolean canBreakBlock(Level world, BlockPos pos, GameProfile profile, @Nullable Player player) {
+    public boolean canBreakBlock(Level world, BlockPos pos, NameAndId profile, @Nullable Player player) {
         var be = world.getBlockEntity(pos, GraveBlockEntity.BLOCK_ENTITY_TYPE);
 
         return be.isEmpty() || (be.get().getGrave() != null && be.get().getGrave().canTakeFrom(profile));
     }
 
     @Override
-    public boolean canDamageEntity(Level world, Entity entity, GameProfile profile, @Nullable Player player) {
+    public boolean canDamageEntity(Level world, Entity entity, NameAndId profile, @Nullable Player player) {
         return !(entity instanceof GraveHolder graveHolder && graveHolder.getGrave() != null && !graveHolder.getGrave().canTakeFrom(profile));
     }
 }

@@ -1,5 +1,5 @@
 package eu.pb4.graves.compat;
-
+/*
 import de.rubixdev.inventorio.api.InventorioAPI;
 import eu.pb4.graves.GravesApi;
 import eu.pb4.graves.grave.GraveInventoryMask;
@@ -54,4 +54,4 @@ public record InventorioCompat() implements GraveInventoryMask {
 
         return false;
     }
-}
+}*/

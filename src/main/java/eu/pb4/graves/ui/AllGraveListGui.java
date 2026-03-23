@@ -40,7 +40,7 @@ public class AllGraveListGui extends PagedGui {
 
             var element = config.ui.listAllGraveIcon.get(grave.isProtected())
                     .builder(placeholders)
-                    .setCallback((index, type, action) -> {
+                    .setCallback(() -> {
                         grave.openUi(player, this.canModify, this.canFetch);
                     });
 

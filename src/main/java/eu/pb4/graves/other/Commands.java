@@ -8,16 +8,18 @@ import eu.pb4.graves.GenericModInfo;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.ui.AllGraveListGui;
 import eu.pb4.graves.ui.GraveListGui;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.GameProfileArgument;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionLevel;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import static eu.pb4.graves.GravesMod.id;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
@@ -26,28 +28,28 @@ public class Commands {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
                     literal("graves")
-                            .requires(Permissions.require("universal_graves.list", true))
+                            .requires(FabricPermissionBridge.require(id("list"), true))
                             .executes((ctx) -> Commands.list(ctx, false))
                             .then(literal("modify")
-                                    .requires(Permissions.require("universal_graves.modify", 3))
+                                    .requires(FabricPermissionBridge.require(id("modify"), PermissionLevel.ADMINS))
                                     .executes((ctx) -> Commands.list(ctx, true))
                             )
 
                             .then(literal("player")
-                                    .requires(Permissions.require("universal_graves.list_others", 3))
+                                    .requires(FabricPermissionBridge.require(id("list_others"), PermissionLevel.ADMINS))
                                     .then(argument("player", GameProfileArgument.gameProfile())
                                             .executes((ctx) -> Commands.listOthers(ctx, false))
                                             .then(literal("modify")
-                                                    .requires(Permissions.require("universal_graves.list_others.modify", 3))
+                                                    .requires(FabricPermissionBridge.require(id("list_others.modify"), PermissionLevel.ADMINS))
                                                     .executes((ctx) -> Commands.listOthers(ctx, true))
                                             )
                                     ))
 
                             .then(literal("all")
-                                    .requires(Permissions.require("universal_graves.list_others", 3))
+                                    .requires(FabricPermissionBridge.require(id("list_others"), PermissionLevel.ADMINS))
                                     .executes((ctx) -> Commands.listAll(ctx, false))
                                     .then(literal("modify")
-                                                    .requires(Permissions.require("universal_graves.list_others.modify", 3))
+                                                    .requires(FabricPermissionBridge.require(id("list_others.modify"), PermissionLevel.ADMINS))
                                                     .executes((ctx) -> Commands.listAll(ctx, true))
                                             )
                             )
@@ -55,7 +57,7 @@ public class Commands {
                             .then(literal("about").executes(Commands::about))
 
                             .then(literal("reload")
-                                    .requires(Permissions.require("universal_graves.reload", 4))
+                                    .requires(FabricPermissionBridge.require(id("reload"), PermissionLevel.OWNERS))
                                     .executes(Commands::reloadConfig)
                             )
             );
@@ -65,7 +67,7 @@ public class Commands {
     private static int list(CommandContext<CommandSourceStack> context, boolean canModify) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
         try {
-            new GraveListGui(player, player.nameAndId(), canModify, Permissions.check(context.getSource(), "universal_graves.fetch_grave", 3)).open();
+            new GraveListGui(player, player.nameAndId(), canModify, FabricPermissionBridge.checkPermission(context.getSource(), id("fetch_grave"), PermissionLevel.ADMINS)).open();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -84,7 +86,7 @@ public class Commands {
             return 0;
         }
         try {
-            new GraveListGui(player, profiles.getFirst(), canModify, canModify && Permissions.check(context.getSource(), "universal_graves.fetch_grave.others", 3)).open();
+            new GraveListGui(player, profiles.getFirst(), canModify, canModify && FabricPermissionBridge.checkPermission(context.getSource(), id("fetch_grave.others"), PermissionLevel.ADMINS)).open();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -95,7 +97,7 @@ public class Commands {
     private static int listAll(CommandContext<CommandSourceStack> context, boolean canModify) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayer();
         try {
-            new AllGraveListGui(player, canModify, canModify && Permissions.check(context.getSource(), "universal_graves.fetch_grave.others", 3)).open();
+            new AllGraveListGui(player, canModify, canModify && FabricPermissionBridge.checkPermission(context.getSource(), id("fetch_grave.others"), PermissionLevel.ADMINS)).open();
         } catch (Exception e) {
             e.printStackTrace();
         }

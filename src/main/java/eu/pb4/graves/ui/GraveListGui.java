@@ -46,7 +46,7 @@ public class GraveListGui extends PagedGui {
             var placeholders = grave.getPlaceholders(this.player.level().getServer());
 
             var element = config.ui.listGraveIcon.get(grave.isProtected()).builder(placeholders)
-                    .setCallback((index, type, action) -> {
+                    .setCallback(() -> {
                         grave.openUi(player, this.canModify, this.canFetch);
                     });
 

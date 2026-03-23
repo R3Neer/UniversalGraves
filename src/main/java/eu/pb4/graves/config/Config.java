@@ -1,7 +1,6 @@
 package eu.pb4.graves.config;
 
 import com.google.gson.annotations.SerializedName;
-import eu.pb4.common.protection.api.CommonProtection;
 import eu.pb4.graves.config.annotations.ConfigCategory;
 import eu.pb4.graves.config.annotations.ConfigHidden;
 import eu.pb4.graves.config.data.IconData;
@@ -18,6 +17,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -212,7 +212,7 @@ public class Config {
         public DataComponentMap gravestoneItemNbt = DataComponentMap.EMPTY;
         public static class CheckedModel {
             @SerializedName("require")
-            public MinecraftPredicate predicate = BuiltinPredicates.operatorLevel(0);
+            public MinecraftPredicate predicate = BuiltinPredicates.operatorLevel(PermissionLevel.ALL);
             @SerializedName("model")
             public String model = "default";
         }
@@ -393,11 +393,11 @@ public class Config {
     }
 
     public void fillMissing() {
-        for (var id : CommonProtection.getProviderIds()) {
+        /*for (var id : CommonProtection.getProviderIds()) {
             if (!id.getNamespace().equals("universal_graves") && !this.placement.blockInProtection.containsKey(id.toString())) {
                 this.placement.blockInProtection.put(id, false);
             }
-        }
+        }*/
     }
 
     public String getFormattedTime(long time) {

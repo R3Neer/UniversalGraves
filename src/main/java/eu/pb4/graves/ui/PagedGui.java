@@ -54,7 +54,7 @@ public abstract class PagedGui extends SimpleGui {
             if (element.element() != null) {
                 this.setSlot(i, element.element());
             } else if (element.slot() != null) {
-                this.setSlotRedirect(i, element.slot());
+                this.setSlot(i, element.slot());
             }
         }
 
@@ -68,7 +68,7 @@ public abstract class PagedGui extends SimpleGui {
             if (navElement.element() != null) {
                 this.setSlot(i + PAGE_SIZE, navElement.element());
             } else if (navElement.slot() != null) {
-                this.setSlotRedirect(i + PAGE_SIZE, navElement.slot());
+                this.setSlot(i + PAGE_SIZE, navElement.slot());
             }
         }
     }
