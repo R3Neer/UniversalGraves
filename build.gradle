@@ -61,21 +61,21 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 
-	implementation include("eu.pb4:sgui:2.0.0-beta.2+26.1")
+	implementation include("eu.pb4:sgui:2.0.0+26.1")
 	implementation include("eu.pb4:placeholder-api:3.0.0-beta.2+26.1")
-	implementation include('xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3')
-	implementation 'eu.pb4:polymer-core:0.16.0-pre.2+26.1-rc-2'
-	implementation 'eu.pb4:polymer-resource-pack:0.16.0-pre.2+26.1-rc-2'
-	implementation 'eu.pb4:polymer-virtual-entity:0.16.0-pre.2+26.1-rc-2'
+	implementation include('xyz.nucleoid:server-translations-api:3.0.3+26.1')
+	implementation 'eu.pb4:polymer-core:0.16.2+26.1.1'
+	implementation 'eu.pb4:polymer-resource-pack:0.16.2+26.1.1'
+	implementation 'eu.pb4:polymer-virtual-entity:0.16.2+26.1.1'
 	implementation include('eu.pb4:predicate-api:0.8.0+26.1')
 	implementation include("eu.pb4:common-protection-api:2.0.0")
-	implementation include("xyz.nucleoid:server-translations-api:3.0.0+26.1-pre-3")
 
 	//compileOnly "dev.emi:trinkets:3.10.0"
+	compileOnly "eu.pb4:trinkets:4.0.0-alpha.5+26.1"
 	//compileOnly "maven.modrinth:inventorio:1.10.3+1.20.2"
 	//compileOnly "io.wispforest:accessories-fabric:1.4.0-beta+1.21.10"
 
-	//compileOnly "maven.modrinth:goml-reserved:1.13.1+1.21"
+	compileOnly "maven.modrinth:goml-reserved:1.20.0+26.1.1"
 	compileOnly 'com.jamieswhiteshirt:rtree-3i-lite:0.3.0'
 	//compileOnly "org.ladysnake.cardinal-components-api:cardinal-components-base:6.1.0"
 

@@ -1,6 +1,8 @@
 package eu.pb4.graves;
 
 import eu.pb4.common.protection.api.CommonProtection;
+import eu.pb4.graves.compat.GomlCompat;
+import eu.pb4.graves.compat.TrinketsUpdatedCompat;
 import eu.pb4.graves.config.ConfigManager;
 import eu.pb4.graves.grave.GraveManager;
 import eu.pb4.graves.other.Commands;
@@ -57,7 +59,7 @@ public class GravesMod implements ModInitializer {
         GravesApi.registerInventoryMask(Identifier.parse("vanilla"), VanillaInventoryMask.INSTANCE);
 
         if (loader.isModLoaded("goml")) {
-            //GomlCompat.register();
+            GomlCompat.register();
         }
         if (loader.isModLoaded("inventorio")) {
             //InventorioCompat.register();
@@ -67,8 +69,8 @@ public class GravesMod implements ModInitializer {
             //AccessoriesCompat.register();
         }
 
-        if (loader.isModLoaded("trinkets")) {
-            //TrinketsCompat.register(loader.isModLoaded("tclayer"));
+        if (loader.isModLoaded("trinkets_updated")) {
+            TrinketsUpdatedCompat.register();
         }
         if (loader.isModLoaded("sgod")) {
             //SaveGearOnDeathCompat.register();
