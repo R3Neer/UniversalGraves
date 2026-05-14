@@ -1,4 +1,4 @@
-package eu.pb4.predicate.impl;
+package eu.pb4.graves.other;
 
 import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.fabricmc.fabric.api.util.TriState;
