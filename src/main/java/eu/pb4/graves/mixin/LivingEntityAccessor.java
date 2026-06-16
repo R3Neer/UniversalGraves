@@ -10,6 +10,5 @@ import net.minecraft.world.item.ItemStack;
 
 @Mixin(LivingEntity.class)
 public interface LivingEntityAccessor {
-    @Invoker
-    Map<EquipmentSlot, ItemStack> callCollectEquipmentChanges();
+
 }

@@ -16,6 +16,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.storage.TagValueInput;
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +42,8 @@ public class EntityModelPart extends ModelPart<EntityElement<?>, EntityModelPart
 
     @Override
     public EntityElement<?> construct(ServerLevel world) {
-        if (entityType == EntityType.PLAYER) {
-            entityType = EntityType.MANNEQUIN;
+        if (entityType == EntityTypes.PLAYER) {
+            entityType = EntityTypes.MANNEQUIN;
         }
 
         var entity = entityType.create(world, EntitySpawnReason.COMMAND);

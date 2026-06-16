@@ -6,6 +6,7 @@ import eu.pb4.graves.model.parts.ItemDisplayModelPart;
 import eu.pb4.graves.model.parts.ParticleModelPart;
 import eu.pb4.graves.model.parts.TextDisplayModelPart;
 import eu.pb4.graves.registry.IconItem;
+import net.minecraft.world.entity.EntityTypes;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
@@ -119,11 +120,11 @@ public class DefaultGraveModels {
             var eye = new EntityModelPart();
             var pearl = new EntityModelPart();
 
-            eye.entityType = EntityType.EYE_OF_ENDER;
+            eye.entityType = EntityTypes.EYE_OF_ENDER;
             eye.position = Vec3.ZERO;
             eye.tags.add(ModelTags.IF_PROTECTED);
 
-            pearl.entityType = EntityType.ENDER_PEARL;
+            pearl.entityType = EntityTypes.ENDER_PEARL;
             pearl.position = Vec3.ZERO;
             pearl.tags.add(ModelTags.IF_UNPROTECTED);
 
@@ -191,7 +192,7 @@ public class DefaultGraveModels {
 
         {
             var entity = new EntityModelPart();
-            entity.entityType = EntityType.SKELETON;
+            entity.entityType = EntityTypes.SKELETON;
             entity.position = new Vec3(0.9, -0.51, 0);
             entity.entityPose = Pose.SLEEPING;
 
@@ -208,7 +209,7 @@ public class DefaultGraveModels {
         }
         {
             var entity = new EntityModelPart();
-            entity.entityType = EntityType.ZOMBIE;
+            entity.entityType = EntityTypes.ZOMBIE;
             entity.position = new Vec3(0.9, -0.51, 0);
             entity.entityPose = Pose.SLEEPING;
 
@@ -272,7 +273,7 @@ public class DefaultGraveModels {
 
         {
             var entity = new EntityModelPart();
-            entity.entityType = EntityType.SKELETON;
+            entity.entityType = EntityTypes.SKELETON;
             entity.position = new Vec3(0.9, -0.51, 0);
             entity.entityPose = Pose.SLEEPING;
 
@@ -289,7 +290,7 @@ public class DefaultGraveModels {
         }
         {
             var entity = new EntityModelPart();
-            entity.entityType = EntityType.PLAYER;
+            entity.entityType = EntityTypes.PLAYER;
             entity.position = new Vec3(0.9, -0.51, 0);
             entity.entityPose = Pose.SLEEPING;
 

@@ -298,7 +298,7 @@ public class Config {
         public IconData backButton = IconData.of(Items.STRUCTURE_VOID, "<red><lang:'text.graves.gui.quick_pickup'>");
 
         @SerializedName("bar")
-        public IconData barButton = IconData.of(Items.WHITE_STAINED_GLASS_PANE, "");
+        public IconData barButton = IconData.of(Items.STAINED_GLASS_PANE.white(), "");
     }
     @ConfigCategory
     @SerializedName("text")

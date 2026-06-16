@@ -5,21 +5,17 @@ import eu.pb4.graves.mixin.ExperienceOrbEntityAccessor;
 import eu.pb4.graves.other.GraveUtils;
 import eu.pb4.polymer.core.api.entity.PolymerEntity;
 import net.fabricmc.fabric.api.networking.v1.context.PacketContext;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public class SafeXPEntity extends ExperienceOrb implements PolymerEntity {
-    public static EntityType<Entity> TYPE = FabricEntityTypeBuilder.create().entityFactory(SafeXPEntity::new).fireImmune().disableSummon().dimensions(EntityDimensions.fixed(0.5F, 0.5F)).trackRangeChunks(6).trackedUpdateRate(20).build(
+    public static EntityType<Entity> TYPE = EntityType.Builder.of(SafeXPEntity::new, MobCategory.MISC).fireImmune().noSummon().sized(0.5F, 0.5F).clientTrackingRange(6).updateInterval(20).build(
             ResourceKey.create(Registries.ENTITY_TYPE, Identifier.fromNamespaceAndPath("universal_graves", "xp"))
     );
     public SafeXPEntity(Level world, double x, double y, double z, int amount) {
@@ -55,6 +51,6 @@ public class SafeXPEntity extends ExperienceOrb implements PolymerEntity {
 
     @Override
     public EntityType<?> getPolymerEntityType(PacketContext context) {
-        return EntityType.EXPERIENCE_ORB;
+        return EntityTypes.EXPERIENCE_ORB;
     }
 }

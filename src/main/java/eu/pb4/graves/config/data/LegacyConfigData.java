@@ -6,6 +6,8 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
+
 import java.util.*;
 
 @Deprecated
@@ -96,7 +98,7 @@ public class LegacyConfigData {
         }
 
         if (!this.createFromPvP) {
-            config.placement.ignoredAttackers.put(EntityType.PLAYER, WrappedText.EMPTY);
+            config.placement.ignoredAttackers.put(EntityTypes.PLAYER, WrappedText.EMPTY);
         }
 
         if (!this.createFromVoid) {

@@ -1,7 +1,7 @@
 package eu.pb4.graves.model;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.EquipmentSlot;
 
 public interface ModelTags {
@@ -26,12 +26,12 @@ public interface ModelTags {
     Identifier EQUIPMENT_OFFHAND_HAND = Identifier.fromNamespaceAndPath("graves", "equipment/offhand_hand");
 
     Identifier[] EQUIPMENT = new Identifier[] { EQUIPMENT_MAIN_HAND, EQUIPMENT_OFFHAND_HAND, EQUIPMENT_HELMET, EQUIPMENT_CHESTPLATE, EQUIPMENT_LEGGINGS, EQUIPMENT_BOOTS };
-    Tuple<Identifier, EquipmentSlot>[] EQUIPMENT_WITH_SLOT = new Tuple[] {
-            new Tuple<>(EQUIPMENT_MAIN_HAND, EquipmentSlot.MAINHAND),
-            new Tuple<>(EQUIPMENT_OFFHAND_HAND, EquipmentSlot.OFFHAND),
-            new Tuple<>(EQUIPMENT_HELMET, EquipmentSlot.HEAD),
-            new Tuple<>(EQUIPMENT_CHESTPLATE, EquipmentSlot.CHEST),
-            new Tuple<>(EQUIPMENT_LEGGINGS, EquipmentSlot.LEGS),
-            new Tuple<>(EQUIPMENT_BOOTS, EquipmentSlot.FEET)
+    Pair<Identifier, EquipmentSlot>[] EQUIPMENT_WITH_SLOT = new Pair[] {
+            new Pair<>(EQUIPMENT_MAIN_HAND, EquipmentSlot.MAINHAND),
+            new Pair<>(EQUIPMENT_OFFHAND_HAND, EquipmentSlot.OFFHAND),
+            new Pair<>(EQUIPMENT_HELMET, EquipmentSlot.HEAD),
+            new Pair<>(EQUIPMENT_CHESTPLATE, EquipmentSlot.CHEST),
+            new Pair<>(EQUIPMENT_LEGGINGS, EquipmentSlot.LEGS),
+            new Pair<>(EQUIPMENT_BOOTS, EquipmentSlot.FEET)
     };
 }

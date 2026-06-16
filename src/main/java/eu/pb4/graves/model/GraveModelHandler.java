@@ -1,5 +1,6 @@
 package eu.pb4.graves.model;
 
+import com.mojang.datafixers.util.Pair;
 import eu.pb4.graves.config.data.WrappedText;
 import eu.pb4.graves.grave.GraveManager;
 import eu.pb4.graves.mixin.MannequinEntityAccessor;
@@ -24,7 +25,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.decoration.Mannequin;
 import net.minecraft.world.item.ItemStack;
@@ -34,14 +34,14 @@ import net.minecraft.world.level.block.state.properties.RotationSegment;
 public class GraveModelHandler extends ElementHolder {
     private final List<TextsWithPlaceholders> textsWithPlaceholders = new ArrayList<>();
     //private final List<ItemDisplayElement> playerHeadDisplays = new ArrayList<>();
-    private final List<Tuple<ItemDisplayElement, ItemDisplayModelPart>> itemDisplays = new ArrayList<>();
+    private final List<Pair<ItemDisplayElement, ItemDisplayModelPart>> itemDisplays = new ArrayList<>();
     private final ServerLevel world;
     private BlockState blockState;
     private float yaw;
     private Set<Identifier> ignoredFlags;
-    private final List<Tuple<VirtualElement, ModelPart<?, ?>>> rotatingElements = new ArrayList<>();
+    private final List<Pair<VirtualElement, ModelPart<?, ?>>> rotatingElements = new ArrayList<>();
     private ModelDataProvider dataPrivider;
-    private final List<Tuple<LivingEntity, Set<Identifier>>> entityWithEquipment = new ArrayList<>();
+    private final List<Pair<LivingEntity, Set<Identifier>>> entityWithEquipment = new ArrayList<>();
     private int tickTime = 20;
 
     public GraveModelHandler(BlockState state, ServerLevel world) {
@@ -147,7 +147,7 @@ public class GraveModelHandler extends ElementHolder {
                         var stack = this.dataPrivider.getGraveTaggedItem(tag);
                         if (!stack.isEmpty()) {
                             itemDisplayElement.setItem(stack);
-                            this.itemDisplays.add(new Tuple<>(itemDisplayElement, itemDisplayModelPart));
+                            this.itemDisplays.add(new Pair<>(itemDisplayElement, itemDisplayModelPart));
                             canContinue = false;
                             break;
                         }
@@ -158,26 +158,26 @@ public class GraveModelHandler extends ElementHolder {
             if (canContinue && part.tags.contains(ModelTags.ITEM)) {
                 var i = this.itemDisplays.size();
                 itemDisplayElement.setItem(this.dataPrivider.getGraveSlotItem(i));
-                this.itemDisplays.add(new Tuple<>(itemDisplayElement, itemDisplayModelPart));
+                this.itemDisplays.add(new Pair<>(itemDisplayElement, itemDisplayModelPart));
             }
         }
 
         if (element instanceof EntityElement<?> entityElement && entityElement.entity() instanceof LivingEntity livingEntity) {
             boolean hasTag = false;
             for (var tag : ModelTags.EQUIPMENT_WITH_SLOT) {
-                if (part.tags.contains(tag.getA())) {
+                if (part.tags.contains(tag.getFirst())) {
                     hasTag = true;
-                    var stack = this.dataPrivider.getGraveTaggedItem(tag.getA());
-                    livingEntity.setItemSlot(tag.getB(), stack);
+                    var stack = this.dataPrivider.getGraveTaggedItem(tag.getFirst());
+                    livingEntity.setItemSlot(tag.getSecond(), stack);
                 }
             }
             if (hasTag) {
-                this.entityWithEquipment.add(new Tuple<>(livingEntity, part.tags));
+                this.entityWithEquipment.add(new Pair<>(livingEntity, part.tags));
             }
         }
 
         if (this.updateYawFor(element, part)) {
-            this.rotatingElements.add(new Tuple<>(element, part));
+            this.rotatingElements.add(new Pair<>(element, part));
         }
 
         if (part instanceof EntityModelPart playerModelPart && element instanceof EntityElement<?> playerElement && playerElement.entity() instanceof Mannequin mannequin) {
@@ -220,7 +220,7 @@ public class GraveModelHandler extends ElementHolder {
     public void setYaw(float value) {
         this.yaw = value;
         for (var element : this.rotatingElements) {
-            updateYawFor(element.getA(), element.getB());
+            updateYawFor(element.getFirst(), element.getSecond());
         }
     }
 
@@ -237,28 +237,28 @@ public class GraveModelHandler extends ElementHolder {
                     boolean canContinue = true;
                     var pair = this.itemDisplays.get(i);
                     for (var tag : ModelTags.EQUIPMENT) {
-                        if (pair.getB().tags.contains(tag)) {
+                        if (pair.getSecond().tags.contains(tag)) {
                             var stack = this.dataPrivider.getGraveTaggedItem(tag);
                             if (!stack.isEmpty()) {
-                                pair.getA().setItem(stack);
+                                pair.getFirst().setItem(stack);
                                 canContinue = false;
                                 break;
                             }
                         }
                     }
-                    if (canContinue && pair.getB().tags.contains(ModelTags.ITEM)) {
-                        pair.getA().setItem(this.dataPrivider.getGraveSlotItem(i));
+                    if (canContinue && pair.getSecond().tags.contains(ModelTags.ITEM)) {
+                        pair.getFirst().setItem(this.dataPrivider.getGraveSlotItem(i));
                         continue;
                     }
 
-                    pair.getA().setItem(ItemStack.EMPTY);
+                    pair.getFirst().setItem(ItemStack.EMPTY);
                 }
 
                 for (var pair : this.entityWithEquipment) {
                     for (var tag : ModelTags.EQUIPMENT_WITH_SLOT) {
-                        if (pair.getB().contains(tag.getA())) {
-                            var stack = this.dataPrivider.getGraveTaggedItem(tag.getA());
-                            pair.getA().setItemSlot(tag.getB(), stack);
+                        if (pair.getSecond().contains(tag.getFirst())) {
+                            var stack = this.dataPrivider.getGraveTaggedItem(tag.getFirst());
+                            pair.getFirst().setItemSlot(tag.getSecond(), stack);
                         }
                     }
                 }
