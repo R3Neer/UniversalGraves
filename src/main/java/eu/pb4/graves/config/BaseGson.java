@@ -148,8 +148,7 @@ public class BaseGson {
                     DynamicLevelUnlockCost.EnchantmentCostMode.fromConfig(getString(object, "enchantment_cost_mode", "levels")),
                     getInt(object, "minimum_cost", 1),
                     getDouble(object, "owner_multiplier", 1),
-                    getDouble(object, "non_owner_multiplier", 3),
-                    getBoolean(object, "allow_non_owner_paid_unlock", false)
+                    getDouble(object, "non_owner_multiplier", 3)
             );
         }
 
@@ -168,7 +167,6 @@ public class BaseGson {
             object.addProperty("minimum_cost", dynamicCost.minimumCost());
             object.addProperty("owner_multiplier", dynamicCost.ownerMultiplier());
             object.addProperty("non_owner_multiplier", dynamicCost.nonOwnerMultiplier());
-            object.addProperty("allow_non_owner_paid_unlock", dynamicCost.allowNonOwnerPaidUnlock());
             return object;
         }
 
@@ -178,10 +176,6 @@ public class BaseGson {
 
         private static double getDouble(JsonObject object, String key, double fallback) {
             return object.has(key) ? object.get(key).getAsDouble() : fallback;
-        }
-
-        private static boolean getBoolean(JsonObject object, String key, boolean fallback) {
-            return object.has(key) ? object.get(key).getAsBoolean() : fallback;
         }
 
         private static String getString(JsonObject object, String key, String fallback) {
