@@ -18,8 +18,7 @@ public record DynamicLevelUnlockCost(
         EnchantmentCostMode enchantmentCostMode,
         int minimumCost,
         double ownerMultiplier,
-        double nonOwnerMultiplier,
-        boolean allowNonOwnerPaidUnlock
+        double nonOwnerMultiplier
 ) implements GraveUnlockCost {
     public DynamicLevelUnlockCost {
         stackDivisor = Math.max(1, stackDivisor);
@@ -37,27 +36,29 @@ public record DynamicLevelUnlockCost(
         return new GenericCost<>(GenericCost.Type.LEVEL, null, this.calculateFinalCost(equivalentStacks, enchantmentValue, owner));
     }
 
-    int calculateFinalCost(long equivalentStacks, long enchantmentValue, boolean owner) {
+    @Override
+    public GenericCost<?> baseQuote(Grave grave) {
+        long equivalentStacks = this.countEquivalentStacks(grave.getItems());
+        long enchantmentValue = this.countEnchantmentValue(grave.getItems());
+        return new GenericCost<>(GenericCost.Type.LEVEL, null, this.calculateBaseCost(equivalentStacks, enchantmentValue));
+    }
+
+    int calculateBaseCost(long equivalentStacks, long enchantmentValue) {
         long stackCost = equivalentStacks / this.stackDivisor;
         long enchantmentCost = enchantmentValue / this.enchantmentDivisor;
         long baseCost = Math.max(this.minimumCost, saturatedAdd(stackCost, enchantmentCost));
+        return clampToInt(baseCost);
+    }
+
+    int calculateFinalCost(long equivalentStacks, long enchantmentValue, boolean owner) {
+        int baseCost = this.calculateBaseCost(equivalentStacks, enchantmentValue);
         double multiplier = owner ? this.ownerMultiplier : this.nonOwnerMultiplier;
-        return ceilAndClamp(baseCost * multiplier);
+        return floorAndClamp(baseCost * multiplier);
     }
 
     @Override
     public boolean requiresPayment() {
         return true;
-    }
-
-    @Override
-    public boolean unlocksPerPlayer() {
-        return true;
-    }
-
-    @Override
-    public boolean allowsNonOwnerPayment() {
-        return this.allowNonOwnerPaidUnlock;
     }
 
     long countEquivalentStacks(Iterable<? extends PositionedItemStack> items) {
@@ -138,14 +139,24 @@ public record DynamicLevelUnlockCost(
         return first + second;
     }
 
-    private static int ceilAndClamp(double value) {
+    private static int clampToInt(long value) {
+        if (value <= 0) {
+            return 0;
+        }
+        if (value >= Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) value;
+    }
+
+    private static int floorAndClamp(double value) {
         if (Double.isNaN(value) || value <= 0) {
             return 0;
         }
         if (value >= Integer.MAX_VALUE) {
             return Integer.MAX_VALUE;
         }
-        return (int) Math.ceil(value);
+        return (int) Math.floor(value);
     }
 
     private static final class StackGroup<T> {
