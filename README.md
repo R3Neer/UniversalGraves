@@ -58,16 +58,14 @@ There are few other data types:
     "enchantment_cost_mode": "levels",
     "minimum_cost": 1,
     "owner_multiplier": 1.0,
-    "non_owner_multiplier": 3.0,
-    // Allows a non-owner to pay for individual access while the grave is protected.
-    "allow_non_owner_paid_unlock": true
+    "non_owner_multiplier": 3.0
   }
   ```
   Stack-compatible items are regrouped using their normal maximum stack size. The base cost is
   `max(minimum_cost, floor(equivalent_stacks / stack_divisor) + floor(enchantment_value / enchantment_divisor))`.
-  The applicable multiplier is then applied and rounded up. Dynamic access is recorded per player, and every new
-  quote uses the grave's remaining contents. Existing `free`, `creative`, `item`, and `level` costs retain their
-  global unlock behavior.
+  The applicable multiplier is then applied and rounded down. Every new quote uses the grave's remaining contents.
+  The shared grave model displays the base cost, while the GUI calculates the exact owner/non-owner price for the
+  player opening it.
 * `{/* ITEMSTACK */}` - represents an item.
   Simple format: `"minecraft:skeleton_skull"`
   Full format
@@ -83,7 +81,7 @@ There are few other data types:
 ```json5
 {
   // Config version. Never modify it unless you want to risk data corruption!
-  "config_version": 4,
+  "config_version": 5,
   "protection": {
     // Time grave is protected against other players. Set to -1 to make it infinite. In seconds
     "non_owner_protection_time": 900,
@@ -97,8 +95,11 @@ There are few other data types:
     "use_real_time": false
   },
   "interactions": {
-    // Cost for accessing grave after death, 
+    // Cost for accessing grave after death,
     "unlocking_cost": { /* COST */ },
+    // Allows non-owners to pay the configured unlock cost for their own access while the grave is protected.
+    // When enabled, unlock payment is tracked per player for both static and dynamic costs.
+    "allow_non_owner_paid_unlock": false,
     // Enables giving death compass, which points to player's grave.
     "give_death_compass": true,
     // Makes clicking grave open an ui.
