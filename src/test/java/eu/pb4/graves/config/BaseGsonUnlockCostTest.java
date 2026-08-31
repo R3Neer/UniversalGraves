@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BaseGsonUnlockCostTest {
     @BeforeAll
@@ -32,15 +31,13 @@ class BaseGsonUnlockCostTest {
                   "enchantment_cost_mode": "enchanted_stacks",
                   "minimum_cost": 2,
                   "owner_multiplier": 1.25,
-                  "non_owner_multiplier": 3.0,
-                  "allow_non_owner_paid_unlock": true
+                  "non_owner_multiplier": 3.0
                 }
                 """;
 
         var parsed = assertInstanceOf(DynamicLevelUnlockCost.class, gson.fromJson(input, GraveUnlockCost.class));
         assertEquals(3, parsed.stackDivisor());
         assertEquals(DynamicLevelUnlockCost.EnchantmentCostMode.ENCHANTED_STACKS, parsed.enchantmentCostMode());
-        assertTrue(parsed.allowNonOwnerPaidUnlock());
         assertEquals(JsonParser.parseString(input), JsonParser.parseString(gson.toJson(parsed, GraveUnlockCost.class)));
     }
 
