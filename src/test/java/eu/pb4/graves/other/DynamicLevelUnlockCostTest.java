@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class DynamicLevelUnlockCostTest {
     private static final DynamicLevelUnlockCost COST = new DynamicLevelUnlockCost(
-            3, 4, DynamicLevelUnlockCost.EnchantmentCostMode.LEVELS, 1, 1, 1.5, true
+            3, 4, DynamicLevelUnlockCost.EnchantmentCostMode.LEVELS, 1, 1, 1.5
     );
 
     @Test
@@ -25,16 +25,17 @@ class DynamicLevelUnlockCostTest {
     }
 
     @Test
-    void appliesDivisorsMinimumAndCeilingMultiplier() {
+    void appliesDivisorsMinimumAndFloorMultiplier() {
+        assertEquals(4, COST.calculateBaseCost(6, 8));
         assertEquals(4, COST.calculateFinalCost(6, 8, true));
         assertEquals(6, COST.calculateFinalCost(6, 8, false));
         assertEquals(1, COST.calculateFinalCost(0, 0, true));
-        assertEquals(2, COST.calculateFinalCost(0, 0, false));
+        assertEquals(1, COST.calculateFinalCost(0, 0, false));
     }
 
     @Test
     void sanitizesInvalidConfigurationValues() {
-        var cost = new DynamicLevelUnlockCost(0, -2, null, -1, -4, Double.NaN, false);
+        var cost = new DynamicLevelUnlockCost(0, -2, null, -1, -4, Double.NaN);
 
         assertEquals(1, cost.stackDivisor());
         assertEquals(1, cost.enchantmentDivisor());
@@ -54,6 +55,7 @@ class DynamicLevelUnlockCostTest {
 
     @Test
     void clampsOverflowToTheMaximumSupportedLevelCost() {
+        assertEquals(Integer.MAX_VALUE, COST.calculateBaseCost(Long.MAX_VALUE, Long.MAX_VALUE));
         assertEquals(Integer.MAX_VALUE, COST.calculateFinalCost(Long.MAX_VALUE, Long.MAX_VALUE, false));
     }
 
