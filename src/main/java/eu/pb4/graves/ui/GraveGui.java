@@ -196,7 +196,11 @@ public class GraveGui extends PagedGui {
 
     private GuiSlot getRemoveProtection() {
         var config = ConfigManager.getConfig();
-        if (this.grave.isProtected() && (this.hasProtectionAccess && (config.interactions.allowRemoteProtectionRemoval || FabricPermissionBridge.checkPermission(player, id("can_remove_protection_remotely"), PermissionLevel.ADMINS)))) {
+        if (!config.interactions.allowNonOwnerPaidUnlock
+                && this.grave.isProtected()
+                && this.hasProtectionAccess
+                && (config.interactions.allowRemoteProtectionRemoval
+                || FabricPermissionBridge.checkPermission(player, id("can_remove_protection_remotely"), PermissionLevel.ADMINS))) {
             if (this.actionTimeRemoveProtect != -1) {
                 return GuiSlot.of(config.ui.removeProtectionButton.get(false).builder()
                         .setCallback(() -> {
