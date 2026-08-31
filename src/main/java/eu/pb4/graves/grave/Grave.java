@@ -277,7 +277,7 @@ public final class Grave {
         values.put("creation_date", Component.literal(config.texts.fullDateFormat.format().format(new Date(this.creationTime * 1000))));
         values.put("since_creation", Component.literal(config.getFormattedTime(System.currentTimeMillis() / 1000 - this.creationTime)));
         values.put("id", Component.literal("" + this.id));
-        values.put("cost", config.interactions.cost.quote(this, true).toText());
+        values.put("cost", config.interactions.cost.baseQuote(this).toText());
         return values;
     }
 
@@ -360,8 +360,8 @@ public final class Grave {
             return false;
         }
 
-        var cost = ConfigManager.getConfig().interactions.cost;
-        return this.hasProtectionAccess(player) || (cost.unlocksPerPlayer() && cost.allowsNonOwnerPayment());
+        var interactions = ConfigManager.getConfig().interactions;
+        return this.hasProtectionAccess(player) || interactions.allowNonOwnerPaidUnlock;
     }
 
     public GenericCost<?> getUnlockCost(ServerPlayer player) {
@@ -379,7 +379,7 @@ public final class Grave {
 
         var cost = cfg.interactions.cost.quote(this, player);
         if (cost.takeCost(player)) {
-            if (cfg.interactions.cost.unlocksPerPlayer()) {
+            if (cfg.interactions.allowNonOwnerPaidUnlock) {
                 this.paidUnlockUUIDs.add(player.getUUID());
             } else {
                 this.requirePayment = false;
