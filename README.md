@@ -48,6 +48,26 @@ There are few other data types:
     "count": 0
   }
   ```
+  Grave unlocking additionally supports a dynamic level cost calculated from the grave's current contents:
+  ```json5
+  {
+    "type": "dynamic_level",
+    "stack_divisor": 3,
+    "enchantment_divisor": 4,
+    // "levels" sums enchantment levels; "enchanted_stacks" counts enchanted stored stacks.
+    "enchantment_cost_mode": "levels",
+    "minimum_cost": 1,
+    "owner_multiplier": 1.0,
+    "non_owner_multiplier": 3.0,
+    // Allows a non-owner to pay for individual access while the grave is protected.
+    "allow_non_owner_paid_unlock": true
+  }
+  ```
+  Stack-compatible items are regrouped using their normal maximum stack size. The base cost is
+  `max(minimum_cost, floor(equivalent_stacks / stack_divisor) + floor(enchantment_value / enchantment_divisor))`.
+  The applicable multiplier is then applied and rounded up. Dynamic access is recorded per player, and every new
+  quote uses the grave's remaining contents. Existing `free`, `creative`, `item`, and `level` costs retain their
+  global unlock behavior.
 * `{/* ITEMSTACK */}` - represents an item.
   Simple format: `"minecraft:skeleton_skull"`
   Full format
@@ -63,7 +83,7 @@ There are few other data types:
 ```json5
 {
   // Config version. Never modify it unless you want to risk data corruption!
-  "config_version": 3,
+  "config_version": 4,
   "protection": {
     // Time grave is protected against other players. Set to -1 to make it infinite. In seconds
     "non_owner_protection_time": 900,
