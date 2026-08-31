@@ -66,6 +66,8 @@ public class Config {
     public static class Interactions {
         @SerializedName("unlocking_cost")
         public GraveUnlockCost cost = new GraveUnlockCost.Static(new GenericCost<>(GenericCost.Type.FREE, null, 0));
+        @SerializedName("allow_non_owner_paid_unlock")
+        public boolean allowNonOwnerPaidUnlock = false;
         @SerializedName("give_death_compass")
         public boolean giveGraveCompass = true;
         @SerializedName("enable_use_death_compass_to_open_gui")
