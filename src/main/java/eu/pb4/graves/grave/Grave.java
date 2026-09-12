@@ -364,6 +364,10 @@ public final class Grave {
         return this.hasProtectionAccess(player) || interactions.allowNonOwnerPaidUnlock;
     }
 
+    public boolean canOpen(ServerPlayer player) {
+        return this.hasAccess(player) || this.canPayForUnlock(player);
+    }
+
     public GenericCost<?> getUnlockCost(ServerPlayer player) {
         return ConfigManager.getConfig().interactions.cost.quote(this, player);
     }

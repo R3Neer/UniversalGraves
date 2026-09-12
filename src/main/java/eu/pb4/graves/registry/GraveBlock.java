@@ -79,7 +79,7 @@ public class GraveBlock extends AbstractGraveBlock implements EntityBlock {
         }
 
         if (blockEntity instanceof GraveBlockEntity graveBlockEntity && graveBlockEntity.getGrave() != null
-                && (graveBlockEntity.getGrave().hasAccess(player) || graveBlockEntity.getGrave().canPayForUnlock(player))) {
+                && graveBlockEntity.getGrave().canOpen(player)) {
             try {
                 var grave = graveBlockEntity.getGrave();
 
