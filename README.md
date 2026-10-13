@@ -1,6 +1,24 @@
 <img src="https://i.imgur.com/PMONXxW.png" width="256px"/>
 
 # Universal Graves
+## R3Neer fork for Minecraft 26.2
+
+This fork extends [Patbox's Universal Graves](https://github.com/Patbox/UniversalGraves)
+with content-based level costs and optional paid access tracked separately for each player.
+Download the regular JAR from [this fork's GitHub releases](https://github.com/R3Neer/UniversalGraves/releases).
+It replaces the upstream Universal Graves JAR; keep only one installed. Fabric, Java 25,
+Fabric API and the Polymer dependencies listed in the mod metadata are required.
+
+The default configuration retains upstream free access. To enable the fork features, set
+`interactions.unlocking_cost.type` to `dynamic_level` and, for individual paid access,
+set `interactions.allow_non_owner_paid_unlock` to `true`. The latter also works with static costs.
+An eligible player can pay while the grave is protected, and their payment persists across restarts.
+Other players still need to pay for their own access. Disabling or expiring protection does not
+remove the payment requirement. Use `/graves reload` after editing the configuration.
+
+Existing static cost configurations and grave data remain supported. Back up worlds and
+configuration before installing this beta. Fork support and releases are maintained in this repository.
+
 It's a simple, but really customisable grave/death chest mod! 
 You can customise as you like, by modifying message, blocks and hologram texts, how long it will be protected,
 if should drop items after expiring and alike.

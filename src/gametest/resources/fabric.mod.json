@@ -1,0 +1,1 @@
+{"schemaVersion":1,"id":"universal_graves_test","version":"1.0.0","name":"Universal Graves integration tests","environment":"*","entrypoints":{"fabric-gametest":["eu.pb4.graves.PaidAccessGameTests"]}}

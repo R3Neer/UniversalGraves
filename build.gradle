@@ -16,6 +16,19 @@ loom {
 	accessWidenerPath = file("src/main/resources/universalgraves.accesswidener")
 }
 
+fabricApi {
+	configureTests {
+		createSourceSet = true
+		modId = 'universal_graves_test'
+		enableGameTests = true
+	}
+}
+
+tasks.withType(AbstractArchiveTask).configureEach {
+	preserveFileTimestamps = false
+	reproducibleFileOrder = true
+}
+
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// You should only use this when depending on other mods because
@@ -186,7 +199,8 @@ publishing {
 	}
 }*/
 
-if (System.getenv("MODRINTH")) {
+// Upstream publishing must be explicitly requested; fork releases use GitHub only.
+if (System.getenv("MODRINTH") && project.findProperty('upstreamPublishing') == 'true') {
 	modrinth {
 		token = System.getenv("MODRINTH")
 		projectId = 'yn9u3ypm'
